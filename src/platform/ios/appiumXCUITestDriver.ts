@@ -114,9 +114,11 @@ export class AppiumXCUITestDriver implements PlatformDriver {
       if (condition.kind === 'url') throw new AutomationError('UNSUPPORTED_CAPABILITY', 'URL waits are not available on native iOS.');
       const current = await this.snapshot(signal);
       try {
-        const found = await this.resolve(condition.selector, current);
-        if (condition.kind !== 'absent' && (condition.kind !== 'text' ||
-          (condition.equals ? found.node.text === condition.equals : condition.contains ? (found.node.text ?? '').includes(condition.contains) : true))) return current;
+        const found = resolveSemanticSelector(current, condition.selector, { allowDisabled: true });
+        if (condition.kind === 'visible' && found.node.visible !== false) return current;
+        if (condition.kind === 'absent' && found.node.visible === false) return current;
+        if (condition.kind === 'text' && found.node.visible !== false &&
+          (condition.equals !== undefined ? found.node.text === condition.equals : condition.contains !== undefined ? (found.node.text ?? '').includes(condition.contains) : true)) return current;
       } catch (error) {
         if (condition.kind === 'absent' && error instanceof AutomationError && error.code === 'ELEMENT_NOT_FOUND') return current;
         if (!(error instanceof AutomationError) || !['ELEMENT_NOT_FOUND', 'AMBIGUOUS_SELECTOR'].includes(error.code)) throw error;
