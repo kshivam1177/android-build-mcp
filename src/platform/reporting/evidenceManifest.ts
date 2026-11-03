@@ -119,7 +119,11 @@ export async function validateEvidenceManifest(reportDirectory: string): Promise
     }
     try {
       try { await assertNoSymlinkPath(reportDirectory, artifact.path); }
-      catch { unsafe.push(artifact.path); continue; }
+      catch (error) {
+        if ((error as NodeJS.ErrnoException).code === 'ENOENT') missing.push(artifact.path);
+        else unsafe.push(artifact.path);
+        continue;
+      }
       const digest = await hashFile(absolute);
       if (digest.sizeBytes !== artifact.sizeBytes || digest.sha256 !== artifact.sha256) modified.push(artifact.path);
     } catch (error) {
