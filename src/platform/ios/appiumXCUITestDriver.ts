@@ -140,7 +140,7 @@ export class AppiumXCUITestDriver implements PlatformDriver {
 
   private async findElement(selector: SemanticSelector, signal?: AbortSignal): Promise<string> {
     const using = selector.strategy === 'accessibilityId' || selector.strategy === 'label' ? 'accessibility id'
-      : selector.strategy === 'resourceId' ? 'id' : selector.strategy === 'xpath' ? 'xpath' : 'name';
+      : selector.strategy === 'resourceId' ? 'id' : selector.strategy === 'role' ? 'class name' : selector.strategy === 'xpath' ? 'xpath' : 'name';
     const response = await this.request<AppiumValue<AppiumElement>>(`/session/${this.requireSession()}/element`, {
       method: 'POST', body: JSON.stringify({ using, value: selector.value }), signal
     });
