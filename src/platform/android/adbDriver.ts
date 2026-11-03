@@ -123,9 +123,8 @@ export class AndroidAdbDriver implements PlatformDriver {
         if (condition.kind === 'visible' && element.node.visible !== false) return snapshot;
         if (condition.kind === 'absent' && element.node.visible === false) return snapshot;
         if (condition.kind === 'text' && element.node.visible !== false &&
-          (condition.kind !== 'text' ||
-            (condition.equals !== undefined ? element.node.text === condition.equals :
-              condition.contains !== undefined ? (element.node.text ?? '').includes(condition.contains) : true))) return snapshot;
+          (condition.equals !== undefined ? element.node.text === condition.equals :
+            condition.contains !== undefined ? (element.node.text ?? '').includes(condition.contains) : true)) return snapshot;
       } catch (error) {
         if (!(error instanceof AutomationError) || !['ELEMENT_NOT_FOUND', 'AMBIGUOUS_SELECTOR'].includes(error.code)) throw error;
         if (condition.kind === 'absent' && error.code === 'ELEMENT_NOT_FOUND') return snapshot;
