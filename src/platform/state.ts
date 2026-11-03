@@ -4,7 +4,7 @@ export type ObservedUiState = 'loading' | 'success' | 'empty' | 'error' | 'valid
 
 export interface StateClassification {
   state: ObservedUiState;
-  confidence: 'high' | 'medium';
+  confidence: 'high' | 'medium' | 'low';
   matchedSignals: string[];
 }
 
