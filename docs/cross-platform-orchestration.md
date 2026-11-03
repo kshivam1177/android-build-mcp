@@ -4,13 +4,15 @@ The cross-platform runner executes independent platform targets through a bounde
 
 ## Cancellation and resource isolation
 
+The MCP runner accepts runTimeoutMs (1,000–3,600,000 ms) to impose an overall deadline. Expiry aborts the shared run signal, stops scheduling pending targets, and asks active drivers to stop. Results distinguish caller cancellation from an overall timeout.
+
 AbortSignal cancellation is carried from the execution engine to Android ADB commands, iOS Appium requests, and Web Agent Browser CLI processes. Child commands are started without a shell, receive SIGTERM on cancellation or timeout, and receive SIGKILL after a short grace period if they do not exit. Active workers are awaited so their finally blocks can close sessions. A cancelled run does not schedule additional platform work.
 
 A driver instance can own only one live session at a time. Target reservations also prevent two sessions from controlling the same configured target concurrently. Failed or partially completed connections trigger best-effort disconnect cleanup. Use a fresh driver instance for every concurrently running execution.
 
 ## Safe retry boundaries
 
-The existing policy.maxRecoveryAttempts setting applies only to read-only waitFor and assert operations. The runner retries only transient stale-snapshot, action-timeout, and driver-unavailable errors, up to the configured bound. A failed assertion is not treated as transient. Mutating actions (tap, type, navigation, lifecycle operations, and gestures) are never automatically retried because the framework cannot prove whether the action reached the target. Each step result records its attempt count.
+The existing policy.maxRecoveryAttempts setting applies only to read-only waitFor and assert operations. The runner retries only transient stale-snapshot, action-timeout, and driver-unavailable errors, up to the configured bound. A failed assertion is not treated as transient. Mutating actions (tap, type, navigation, lifecycle operations, and gestures) are never automatically retried because the framework cannot prove whether the action reached the target. Each step result records its attempt count. Run summaries and JUnit output include platform totals, failed steps, retried steps, total attempts, cancellation, and timeout status.
 
 ## Checkpoint and resume
 
