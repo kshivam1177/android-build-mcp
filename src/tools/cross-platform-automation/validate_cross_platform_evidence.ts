@@ -27,7 +27,10 @@ export function register(server: McpServer) {
     if (!relative || relative.startsWith('..') || path.isAbsolute(relative) || relative.split(path.sep).includes('.runs')) {
       throw new Error('reportDirectory must identify a run directory beneath .androidmcp-framework/test-reports and cannot target internal .runs state.');
     }
+    const projectReal = await fs.realpath(root);
+    const expectedReportsRoot = path.join(projectReal, '.androidmcp-framework', 'test-reports');
     const rootReal = await fs.realpath(reportsRoot);
+    if (rootReal !== expectedReportsRoot) throw new Error('The test-reports directory or one of its parents resolves outside the project root.');
     const directoryStat = await fs.lstat(directory);
     if (directoryStat.isSymbolicLink() || !directoryStat.isDirectory()) throw new Error('Evidence report directory must be a real directory, not a symlink.');
     const directoryReal = await fs.realpath(directory);
