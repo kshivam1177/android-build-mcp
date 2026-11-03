@@ -81,6 +81,9 @@ function toPlatformAction(step: AutomationTestStep, variables: Record<string, st
     case 'back': return { type: 'back' };
     case 'navigate': return { type: 'navigate', url: step.url };
     case 'wait': return { type: 'wait', ...(step.timeoutMs !== undefined ? { timeoutMs: step.timeoutMs } : {}) };
+    case 'hideKeyboard': return { type: 'hideKeyboard' };
+    case 'launchApp': return { type: 'launchApp', ...(step.appId ? { appId: step.appId } : {}) };
+    case 'terminateApp': return { type: 'terminateApp', ...(step.appId ? { appId: step.appId } : {}) };
     case 'waitFor': throw new AutomationError('INVALID_SPEC', 'waitFor is handled by the condition engine.');
     case 'assert': throw new AutomationError('INVALID_SPEC', 'assert is handled by the snapshot assertion engine.');
   }
