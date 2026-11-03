@@ -57,6 +57,11 @@ export const automationTestSchema = z.object({
   }).default({ allowDestructiveActions: false, maxRecoveryAttempts: 1 }),
   steps: z.array(actionSchema).min(1).max(500)
 }).strict().superRefine((spec, context) => {
+  const platforms = new Set<string>();
+  spec.platforms.forEach((platform, index) => {
+    if (platforms.has(platform)) context.addIssue({ code: z.ZodIssueCode.custom, path: ['platforms', index], message: 'Platform targets must be unique within a test definition.' });
+    platforms.add(platform);
+  });
   const ids = new Set<string>();
   spec.steps.forEach((step, index) => {
     if (ids.has(step.id)) context.addIssue({ code: z.ZodIssueCode.custom, path: ['steps', index, 'id'], message: 'Step IDs must be unique.' });
