@@ -15,7 +15,7 @@ describe('FileRunCheckpointStore', () => {
     const file = path.join(directory, 'run.json');
     const store = new FileRunCheckpointStore(file);
     const checkpoint: RunCheckpoint = {
-      version: 1, runId: 'run-1', testId: 'smoke', startedAt: new Date().toISOString(),
+      version: 1, runId: 'run-1', testId: 'smoke', definitionHash: 'sha256-test', startedAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(), status: 'running', activePlatforms: ['android'], completedPlatforms: []
     };
     await store.save(checkpoint);
