@@ -75,7 +75,7 @@ function matchesNode(node: SnapshotNode, selector: SemanticSelector, expected: s
       case 'xpath': return [node.attributes?.selector?.toString()];
     }
   })().filter((value): value is string => typeof value === 'string');
-  return candidates.some((value) => selector.exact === false
+  return candidates.some((value) => typeof value === 'string' && (selector.exact === false
     ? value.toLocaleLowerCase().includes(expected.toLocaleLowerCase())
-    : value === expected);
+    : value === expected));
 }
