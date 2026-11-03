@@ -4,6 +4,11 @@ This addendum expands the initial driver/orchestrator slice with deterministic q
 
 ## Included in this increment
 
+- Cross-platform runtime preflight MCP tool with Android, Flutter, iOS and Web dependency checks and actionable remediation.
+- Android and iOS `hideKeyboard`, `launchApp` and `terminateApp` actions exposed through the versioned test schema and deterministic engine.
+- Flutter delegates lifecycle and keyboard operations to its selected native OS driver.
+- Native permission prompts are classified as a distinct UI state; permission grant/deny decisions remain explicit test actions, never automatic.
+
 - Snapshot assertion evaluator for existence, visibility, enabled state and exact/contained text.
 - Explainable UI state classification for loading, success, empty, error, validation, authentication and unexpected screens.
 - Explicit action-risk policy. Risk is supplied as intent by the test author or planner; the framework does not guess destructive intent from labels.
