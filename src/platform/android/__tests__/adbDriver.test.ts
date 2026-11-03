@@ -80,7 +80,7 @@ describe('AndroidAdbDriver', () => {
   it('rejects malformed app identifiers before native command dispatch', async () => {
     const driver = new AndroidAdbDriver(backend());
     await expect(driver.connect({ platform: 'android', targetId: 'emulator-5554', appId: 'com.example; rm -rf /' }))
-      .rejects.toMatchObject({ code: 'CONNECTION_FAILED' });
+      .rejects.toMatchObject({ code: 'INVALID_SPEC' });
     await driver.connect({ platform: 'android', targetId: 'emulator-5554' });
     await expect(driver.perform({ type: 'launchApp', appId: 'com.example;bad' }))
       .rejects.toMatchObject({ code: 'INVALID_SPEC' });
