@@ -29,7 +29,9 @@ export function toJunitXml(result: AutomationRunResult): string {
   const body = cases.map((item) => {
     const failure = item.status === 'failed' ? '<failure message="' + escapeXml(item.message || 'Failed') + '">' + escapeXml(item.message) + '</failure>' : '';
     const skip = item.status === 'skipped' ? '<skipped message="' + escapeXml(item.message || 'Skipped') + '"/>' : '';
-    return '<testcase classname="' + escapeXml(item.classname) + '" name="' + escapeXml(item.name) + '" time="' + item.time + '">' + failure + skip + '</testcase>';
+    const source = result.platforms.flatMap((platform) => platform.steps.map((step) => ({ platform: platform.platform, id: step.id, attempts: step.attempts ?? 1 }))).find((step) => item.name === step.platform + ' / ' + step.id);
+    const properties = source ? '<properties><property name="attempts" value="' + source.attempts + '"/></properties>' : '';
+    return '<testcase classname="' + escapeXml(item.classname) + '" name="' + escapeXml(item.name) + '" time="' + item.time + '">' + properties + failure + skip + '</testcase>';
   }).join('');
   return '<?xml version="1.0" encoding="UTF-8"?>\n<testsuite name="' + escapeXml(result.testId) + '" tests="' + cases.length + '" failures="' + failures + '" skipped="' + skipped + '" time="' + seconds + '">' + body + '</testsuite>\n';
 }
