@@ -9,6 +9,7 @@ import { doctorTools } from './tools/doctor/index.js';
 import { workflowDiscoveryTools } from './tools/workflow-discovery/index.js';
 import { androidCliTools } from './tools/android-cli/index.js';
 import { testingIntelligenceTools } from './tools/testing-intelligence/index.js';
+import { crossPlatformAutomationTools } from './tools/cross-platform-automation/index.js';
 import type { ToolModule } from './tools/types.js';
 
 export interface WorkflowDefinition {
@@ -81,6 +82,12 @@ export const WORKFLOWS: WorkflowDefinition[] = [
     description: 'Project test discovery, change-aware test planning, saved UI workflows, native/Flutter test matrices, unified resumable E2E runs, strict evidence gates, and consolidated reports.',
     defaultEnabled: true,
     tools: testingIntelligenceTools,
+  },
+  {
+    name: 'cross-platform-automation',
+    description: 'Validate and execute versioned cross-platform UI automation definitions across Android, Flutter, iOS and Web with deterministic drivers and consolidated reports.',
+    defaultEnabled: false,
+    tools: crossPlatformAutomationTools,
   },
   {
     name: 'workflow-discovery',
