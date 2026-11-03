@@ -39,6 +39,16 @@ describe('AndroidAdbDriver', () => {
     await driver.disconnect();
   });
 
+  it('dismisses the Android keyboard through the native back key event', async () => {
+    const mock = backend();
+    const driver = new AndroidAdbDriver(mock);
+    await driver.connect({ platform: 'android', targetId: 'emulator-5554' });
+    const result = await driver.perform({ type: 'hideKeyboard' });
+    expect(result.dispatched).toBe(true);
+    expect(mock.keyEvent).toHaveBeenCalledWith('emulator-5554', 'KEYCODE_BACK');
+    await driver.disconnect();
+  });
+
   it('rejects missing Android target configuration', async () => {
     const driver = new AndroidAdbDriver(backend());
     await expect(driver.connect({ platform: 'android' })).rejects.toMatchObject({ code: 'INVALID_SPEC' });
