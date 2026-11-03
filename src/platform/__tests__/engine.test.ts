@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { createHash } from 'node:crypto';
 import { AutomationEngine } from '../engine.js';
 import { parseAutomationTest } from '../specification.js';
-import type { PlatformDriver } from '../contracts.js';
+import { AutomationError, type PlatformDriver } from '../contracts.js';
 
 function fakeDriver(platform: 'android' | 'ios' | 'web'): PlatformDriver {
   const session = { id: 'session-' + platform, platform, targetId: platform, connectedAt: new Date().toISOString() };
@@ -177,5 +177,36 @@ describe('AutomationEngine checkpoint resume', () => {
       checkpointStore: store, resume: true
     })).rejects.toThrow('blocked to avoid replaying');
     expect(android.connect).not.toHaveBeenCalled();
+  });
+});
+
+
+describe('AutomationEngine retry boundaries', () => {
+  it('retries transient read-only snapshot failures within the configured bound', async () => {
+    const android = fakeDriver('android');
+    vi.mocked(android.snapshot).mockRejectedValueOnce(new AutomationError('STALE_SNAPSHOT', 'snapshot expired'));
+    const definition = parseAutomationTest({
+      schemaVersion: '1.0', id: 'read-retry', name: 'Read retry', platforms: ['android'],
+      policy: { maxRecoveryAttempts: 1 },
+      steps: [{ id: 'ready', type: 'assert', assertion: { kind: 'exists', selector: { strategy: 'text', value: 'Ready' } } }]
+    });
+    const result = await new AutomationEngine({ drivers: { android } }).run(definition);
+    expect(result.success).toBe(true);
+    expect(android.snapshot).toHaveBeenCalledTimes(2);
+    expect(result.platforms[0]?.steps[0]?.attempts).toBe(2);
+  });
+
+  it('never retries an action that may already have been dispatched', async () => {
+    const android = fakeDriver('android');
+    vi.mocked(android.perform).mockRejectedValueOnce(new AutomationError('ACTION_TIMEOUT', 'tap response timed out'));
+    const definition = parseAutomationTest({
+      schemaVersion: '1.0', id: 'no-action-retry', name: 'No action retry', platforms: ['android'],
+      policy: { maxRecoveryAttempts: 3 },
+      steps: [{ id: 'pay', type: 'tap', selector: { strategy: 'text', value: 'Pay' } }]
+    });
+    const result = await new AutomationEngine({ drivers: { android } }).run(definition);
+    expect(result.success).toBe(false);
+    expect(android.perform).toHaveBeenCalledOnce();
+    expect(result.platforms[0]?.steps[0]?.attempts).toBe(1);
   });
 });
