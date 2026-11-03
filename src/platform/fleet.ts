@@ -32,10 +32,11 @@ async function serialized<T>(key: string, work: () => Promise<T>): Promise<T> {
   const previous = queues.get(key) ?? Promise.resolve();
   let release!: () => void;
   const current = new Promise<void>((resolve) => { release = resolve; });
-  queues.set(key, previous.then(() => current));
+  const tail = previous.then(() => current);
+  queues.set(key, tail);
   await previous;
   try { return await work(); }
-  finally { release(); if (queues.get(key) === current) queues.delete(key); }
+  finally { release(); if (queues.get(key) === tail) queues.delete(key); }
 }
 
 async function readJson<T>(file: string, schema: z.ZodType<T>, fallback: T): Promise<T> {
