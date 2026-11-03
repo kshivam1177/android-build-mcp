@@ -50,6 +50,9 @@ export class AutomationEngine {
             if (!assertion.passed) throw new AutomationError('ACTION_FAILED', 'Assertion failed: ' + assertion.message, { assertion });
           } else {
             const action = toPlatformAction(step, variables);
+            if (action.type === 'terminateApp' && !definition.policy.allowDestructiveActions) {
+              throw new AutomationError('UNSUPPORTED_CAPABILITY', 'terminateApp is destructive and requires policy.allowDestructiveActions=true.');
+            }
             if (!capabilities.supportedActions.includes(action.type)) throw new AutomationError('UNSUPPORTED_CAPABILITY', 'Platform ' + platform + ' does not support ' + action.type + '.', { platform, action: action.type });
             await driver.perform(action, signal);
           }
