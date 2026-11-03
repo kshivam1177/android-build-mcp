@@ -4,3 +4,5 @@ export * from './specification.js';
 export * from './session.js';
 export * from './engine.js';
 export * from './android/adbDriver.js';
+export * from './web/agentBrowserDriver.js';
+export * from './ios/appiumXCUITestDriver.js';
