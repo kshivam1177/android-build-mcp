@@ -30,6 +30,7 @@ describe('FileDeviceFleet', () => {
     const lease = await fleet.acquire('pixel-8', 'run-1', 60);
     await expect(fleet.acquire('pixel-8', 'run-2', 60)).rejects.toThrow('already leased');
     await expect(fleet.remove('pixel-8')).rejects.toThrow('active lease');
+    await expect(fleet.register({ id: 'pixel-8', platform: 'android', targetId: 'emulator-5556', labels: [], enabled: true })).rejects.toThrow('active lease');
     expect(await fleet.release(lease.token)).toBe(true);
     expect(await fleet.release(lease.token)).toBe(false);
   });
