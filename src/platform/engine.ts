@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { AutomationError, type DriverConfig, type PlatformAction, type PlatformDriver, type PlatformKind } from './contracts.js';
+import { evaluateSnapshotAssertion } from './assertions.js';
 import { DriverSessionManager } from './session.js';
 import type { AutomationTestDefinition, AutomationTestStep } from './specification.js';
 
@@ -29,7 +30,7 @@ export class AutomationEngine {
   private async runPlatform(runId: string, definition: AutomationTestDefinition, platform: PlatformKind, variables: Record<string, string | number | boolean | undefined>, signal?: AbortSignal): Promise<PlatformRunResult> {
     const startedAt = new Date().toISOString(); const started = Date.now(); const steps: PlatformRunResult['steps'] = [];
     const driver = this.options.drivers[platform];
-    if (!driver) return { platform, success: false, startedAt, durationMs: Date.now() - started, steps, error: `No driver registered for platform ${platform}.` };
+    if (!driver) return { platform, success: false, startedAt, durationMs: Date.now() - started, steps, error: 'No driver registered for platform ' + platform + '.' };
     let sessionId: string | undefined; let platformError: string | undefined;
     let evidence: PlatformRunResult['evidence'];
     try {
@@ -43,9 +44,13 @@ export class AutomationEngine {
         try {
           if (step.type === 'waitFor') {
             await driver.waitFor(step.condition, step.timeoutMs, signal);
+          } else if (step.type === 'assert') {
+            const snapshot = await driver.snapshot(signal);
+            const assertion = evaluateSnapshotAssertion(snapshot, step.assertion);
+            if (!assertion.passed) throw new AutomationError('ACTION_FAILED', 'Assertion failed: ' + assertion.message, { assertion });
           } else {
             const action = toPlatformAction(step, variables);
-            if (!capabilities.supportedActions.includes(action.type)) throw new AutomationError('UNSUPPORTED_CAPABILITY', `Platform ${platform} does not support ${action.type}.`, { platform, action: action.type });
+            if (!capabilities.supportedActions.includes(action.type)) throw new AutomationError('UNSUPPORTED_CAPABILITY', 'Platform ' + platform + ' does not support ' + action.type + '.', { platform, action: action.type });
             await driver.perform(action, signal);
           }
           steps.push({ id: step.id, type: step.type, status: 'passed', durationMs: Date.now() - stepStarted });
@@ -62,7 +67,7 @@ export class AutomationEngine {
         }
       }
     } catch (error) { platformError = error instanceof Error ? error.message : String(error); }
-    finally { if (sessionId) { try { await this.sessions.close(sessionId); } catch (error) { platformError ??= `Session cleanup failed: ${error instanceof Error ? error.message : String(error)}`; } } }
+    finally { if (sessionId) { try { await this.sessions.close(sessionId); } catch (error) { platformError ??= 'Session cleanup failed: ' + (error instanceof Error ? error.message : String(error)); } } }
     return { platform, ...(sessionId ? { sessionId } : {}), success: !platformError && steps.length === definition.steps.length && steps.every((s) => s.status === 'passed'), startedAt, durationMs: Date.now() - started, steps, ...(platformError ? { error: redact(platformError, variables) } : {}), ...(evidence ? { evidence } : {}) };
   }
 }
@@ -77,10 +82,11 @@ function toPlatformAction(step: AutomationTestStep, variables: Record<string, st
     case 'navigate': return { type: 'navigate', url: step.url };
     case 'wait': return { type: 'wait', ...(step.timeoutMs !== undefined ? { timeoutMs: step.timeoutMs } : {}) };
     case 'waitFor': throw new AutomationError('INVALID_SPEC', 'waitFor is handled by the condition engine.');
+    case 'assert': throw new AutomationError('INVALID_SPEC', 'assert is handled by the snapshot assertion engine.');
   }
 }
 function interpolate(value: string, variables: Record<string, string | number | boolean | undefined>): string {
-  return value.replace(/\$\{([A-Za-z_][A-Za-z0-9_]*)\}/g, (_match, name: string) => { const resolved = variables[name]; if (resolved === undefined) throw new AutomationError('INVALID_SPEC', `Test variable ${name} is not defined.`); return String(resolved); });
+  return value.replace(/\$\{([A-Za-z_][A-Za-z0-9_]*)\}/g, (_match, name: string) => { const resolved = variables[name]; if (resolved === undefined) throw new AutomationError('INVALID_SPEC', 'Test variable ' + name + ' is not defined.'); return String(resolved); });
 }
 function redact(message: string, variables: Record<string, string | number | boolean | undefined>): string {
   let result = message; for (const value of Object.values(variables)) if (typeof value === 'string' && value.length >= 4) result = result.split(value).join('[REDACTED]'); return result;
