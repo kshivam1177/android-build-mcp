@@ -37,7 +37,7 @@ async function assertNoSymlinkPath(directory: string, relative: string): Promise
   let current = directory;
   const segments = relative.split('/');
   for (let index = 0; index < segments.length; index += 1) {
-    current = path.join(current, segments[index]);
+    current = path.join(current, segments[index]!);
     const stat = await fs.lstat(current);
     if (stat.isSymbolicLink()) throw new Error('Symbolic links are not allowed in evidence bundles: ' + relative);
     if (index < segments.length - 1 && !stat.isDirectory()) throw new Error('Evidence artifact parent is not a directory: ' + relative);
