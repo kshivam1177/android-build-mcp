@@ -128,3 +128,52 @@ describe('AutomationEngine', () => {
     expect(result.platforms[0]?.evidence).toBeDefined();
   });
 });
+
+
+describe('AutomationEngine checkpoint resume', () => {
+  it('restores completed platform results without rerunning them', async () => {
+    const android = fakeDriver('android');
+    const web = fakeDriver('web');
+    const completed = {
+      platform: 'android' as const, success: true, startedAt: new Date().toISOString(),
+      durationMs: 12, steps: [{ id: 'done', type: 'wait', status: 'passed' as const, durationMs: 1 }]
+    };
+    const checkpoint = {
+      version: 1 as const, runId: 'existing-run', testId: 'resume-test',
+      startedAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
+      status: 'running' as const, activePlatforms: [], completedPlatforms: [completed]
+    };
+    const store = { load: vi.fn(async () => checkpoint), save: vi.fn(async () => undefined) };
+    const definition = parseAutomationTest({
+      schemaVersion: '1.0', id: 'resume-test', name: 'Resume test',
+      platforms: ['android', 'web'], steps: [{ id: 'settle', type: 'wait', timeoutMs: 1 }]
+    });
+    const result = await new AutomationEngine({ drivers: { android, web } }).run(definition, {
+      checkpointStore: store, resume: true
+    });
+    expect(result.runId).toBe('existing-run');
+    expect(result.success).toBe(true);
+    expect(android.connect).not.toHaveBeenCalled();
+    expect(web.connect).toHaveBeenCalledOnce();
+  });
+
+  it('blocks resume when a platform was active at interruption', async () => {
+    const android = fakeDriver('android');
+    const store = {
+      load: vi.fn(async () => ({
+        version: 1 as const, runId: 'interrupted-run', testId: 'interrupted',
+        startedAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
+        status: 'running' as const, activePlatforms: ['android' as const], completedPlatforms: []
+      })),
+      save: vi.fn(async () => undefined)
+    };
+    const definition = parseAutomationTest({
+      schemaVersion: '1.0', id: 'interrupted', name: 'Interrupted test',
+      platforms: ['android'], steps: [{ id: 'tap', type: 'tap', selector: { strategy: 'text', value: 'Pay' } }]
+    });
+    await expect(new AutomationEngine({ drivers: { android } }).run(definition, {
+      checkpointStore: store, resume: true
+    })).rejects.toThrow('blocked to avoid replaying');
+    expect(android.connect).not.toHaveBeenCalled();
+  });
+});
