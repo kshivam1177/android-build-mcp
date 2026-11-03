@@ -4,7 +4,7 @@ The cross-platform runner executes independent platform targets through a bounde
 
 ## Cancellation and resource isolation
 
-The MCP runner accepts runTimeoutMs (1,000–3,600,000 ms) to impose an overall deadline. Expiry aborts the shared run signal, stops scheduling pending targets, and asks active drivers to stop. Results distinguish caller cancellation from an overall timeout.
+The MCP runner accepts runTimeoutMs (1,000–3,600,000 ms) to impose an overall deadline. Expiry aborts the shared run signal, stops scheduling pending targets, and asks active drivers to stop. Results distinguish caller cancellation from an overall timeout and mark cancelled platform targets separately from failures.
 
 AbortSignal cancellation is carried from the execution engine to Android ADB commands, iOS Appium requests, and Web Agent Browser CLI processes. Child commands are started without a shell, receive SIGTERM on cancellation or timeout, and receive SIGKILL after a short grace period if they do not exit. Active workers are awaited so their finally blocks can close sessions. A cancelled run does not schedule additional platform work.
 
