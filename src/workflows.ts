@@ -55,7 +55,7 @@ export const WORKFLOWS: WorkflowDefinition[] = [
   {
     name: 'gradle-module',
     description:
-      'Build/test/run/list/stop a standalone Gradle module (pure-JVM/Kotlin library or CLI) - the roughest analogy in this project to Xcode\\'s swift-package workflow; Android has no exact equivalent to a runnable SPM target.',
+      "Build/test/run/list/stop a standalone Gradle module (pure-JVM/Kotlin library or CLI) - the closest equivalent in this project to an Xcode Swift Package workflow; Android has no exact equivalent to a runnable SPM target.",
     defaultEnabled: false,
     tools: gradleModuleTools,
   },
