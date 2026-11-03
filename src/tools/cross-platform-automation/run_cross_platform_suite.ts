@@ -10,6 +10,7 @@ import { parseAutomationTest } from '../../platform/specification.js';
 import { evaluateCrossPlatformSuiteGate } from '../../platform/suite.js';
 import { toJunitXml } from '../../platform/reporting/junit.js';
 import { redactSensitiveText } from '../../platform/reporting/redaction.js';
+import { createEvidenceManifest } from '../../platform/reporting/evidenceManifest.js';
 import { execCommand } from '../../utils/exec.js';
 import { resolveProjectRoot } from '../../utils/paths.js';
 import { withErrorHandling, textResult } from '../../utils/response.js';
@@ -159,7 +160,9 @@ export function register(server: McpServer) {
       fs.writeFile(markdownPath, redactSensitiveText(lines.join('\n'), secrets), 'utf8'),
       fs.writeFile(junitPath, redactSensitiveText('<?xml version="1.0" encoding="UTF-8"?>\n<testsuites>\n' + junitSuites.join('\n') + '\n</testsuites>\n', secrets), 'utf8')
     ]);
-    const response = { runId, gate, selectedCount: selected.length, executedCount: outcomes.length, reportDirectory, jsonReport: jsonPath, markdownReport: markdownPath, junitReport: junitPath, outcomes: outcomes.map(({ id, name, success, durationMs, error }) => ({ id, name, success, durationMs, error })) };
+    const evidenceManifest = await createEvidenceManifest({ reportDirectory, runId, gitHeadSha: sourceRevisionUnchanged ? finalState.gitHeadSha : null, definitionManifestSha256 });
+    const evidenceManifestPath = path.join(reportDirectory, 'evidence-manifest.json');
+    const response = { runId, gate, selectedCount: selected.length, executedCount: outcomes.length, reportDirectory, jsonReport: jsonPath, markdownReport: markdownPath, junitReport: junitPath, evidenceManifest: evidenceManifestPath, evidenceArtifactCount: evidenceManifest.artifacts.length, outcomes: outcomes.map(({ id, name, success, durationMs, error }) => ({ id, name, success, durationMs, error })) };
     return textResult(JSON.stringify(response, null, 2), response);
   }));
 }
