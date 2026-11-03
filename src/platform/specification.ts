@@ -32,8 +32,8 @@ const actionSchema = z.discriminatedUnion('type', [
   z.object({ id: z.string().min(1), type: z.literal('navigate'), url: z.string().url() }),
   z.object({ id: z.string().min(1), type: z.literal('wait'), timeoutMs: z.number().int().positive().max(120000).optional() }),
   z.object({ id: z.string().min(1), type: z.literal('hideKeyboard') }),
-  z.object({ id: z.string().min(1), type: z.literal('launchApp'), appId: z.string().trim().regex(/^[A-Za-z_][A-Za-z0-9_]*(?:\\.[A-Za-z_][A-Za-z0-9_]*)+$/).optional() }),
-  z.object({ id: z.string().min(1), type: z.literal('terminateApp'), appId: z.string().trim().min(1).optional() }),
+  z.object({ id: z.string().min(1), type: z.literal('launchApp'), appId: z.string().trim().regex(/^[A-Za-z_][A-Za-z0-9_]*(?:\.[A-Za-z_][A-Za-z0-9_]*)+$/).optional() }),
+  z.object({ id: z.string().min(1), type: z.literal('terminateApp'), appId: z.string().trim().regex(/^[A-Za-z_][A-Za-z0-9_]*(?:\.[A-Za-z_][A-Za-z0-9_]*)+$/).optional() }),
   z.object({ id: z.string().min(1), type: z.literal('waitFor'), condition: waitConditionSchema, timeoutMs: z.number().int().positive().max(120000).default(10000) }),
   z.object({ id: z.string().min(1), type: z.literal('assert'), assertion: assertionSchema })
 ]);
@@ -44,7 +44,7 @@ export const automationTestSchema = z.object({
   name: z.string().min(1).max(200),
   platforms: z.array(z.enum(['android', 'flutter', 'ios', 'web'])).min(1).max(4),
   targets: z.record(z.enum(['android', 'flutter', 'ios', 'web']), z.object({
-    appId: z.string().regex(/^[A-Za-z_][A-Za-z0-9_]*(?:\\.[A-Za-z_][A-Za-z0-9_]*)+$/).optional(),
+    appId: z.string().regex(/^[A-Za-z_][A-Za-z0-9_]*(?:\.[A-Za-z_][A-Za-z0-9_]*)+$/).optional(),
     baseUrl: z.string().url().optional(),
     targetId: z.string().optional(),
     metadata: z.record(z.string(), z.union([z.string(), z.number(), z.boolean()])).optional()
