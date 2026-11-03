@@ -62,7 +62,7 @@ export function register(server: McpServer) {
       '- Duration: ' + result.durationMs + ' ms', '',
       '## Platform results', ''
     ];
-    for (const platform of result.platforms) {
+    for (const platform of reportResult.platforms) {
       lines.push('### ' + platform.platform + ': ' + (platform.success ? 'PASSED' : 'FAILED'));
       lines.push('- Duration: ' + platform.durationMs + ' ms');
       if (platform.error) lines.push('- Error: ' + platform.error);
