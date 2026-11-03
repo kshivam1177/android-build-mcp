@@ -62,6 +62,7 @@ describe('AutomationEngine', () => {
     });
     const definition = parseAutomationTest({
       schemaVersion: '1.0', id: 'lifecycle-engine', name: 'Lifecycle engine', platforms: ['android'],
+      policy: { allowDestructiveActions: true },
       steps: [
         { id: 'hide', type: 'hideKeyboard' },
         { id: 'launch', type: 'launchApp', appId: 'com.example.app' },
@@ -71,6 +72,22 @@ describe('AutomationEngine', () => {
     const result = await new AutomationEngine({ drivers: { android } }).run(definition);
     expect(result.success).toBe(true);
     expect(vi.mocked(android.perform).mock.calls.map((call) => call[0].type)).toEqual(['hideKeyboard', 'launchApp', 'terminateApp']);
+  });
+
+  it('blocks app termination unless the test explicitly allows destructive actions', async () => {
+    const android = fakeDriver('android');
+    vi.mocked(android.capabilities).mockResolvedValue({
+      platform: 'android', snapshots: true, accessibilityTree: true, screenshots: true, gestures: true,
+      appLifecycle: true, browserNavigation: false, nativeDialogs: true, supportedActions: ['terminateApp']
+    });
+    const definition = parseAutomationTest({
+      schemaVersion: '1.0', id: 'termination-policy', name: 'Termination policy', platforms: ['android'],
+      steps: [{ id: 'stop-app', type: 'terminateApp', appId: 'com.example.app' }]
+    });
+    const result = await new AutomationEngine({ drivers: { android } }).run(definition);
+    expect(result.success).toBe(false);
+    expect(result.platforms[0]?.steps[0]?.error).toContain('allowDestructiveActions=true');
+    expect(android.perform).not.toHaveBeenCalled();
   });
 
   it('runs waitFor through the driver condition API', async () => {
