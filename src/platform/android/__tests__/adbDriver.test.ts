@@ -1,6 +1,11 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { AutomationBackend } from '../../../automation/backend.js';
 import { AndroidAdbDriver } from '../adbDriver.js';
+import { runAdbShell } from '../../../utils/adb.js';
+
+vi.mock('../../../utils/adb.js', () => ({
+  runAdbShell: vi.fn(async () => ({ stdout: '', stderr: '', exitCode: 0, command: 'adb', durationMs: 0 }))
+}));
 
 function backend(): AutomationBackend {
   return {
@@ -46,6 +51,27 @@ describe('AndroidAdbDriver', () => {
     const result = await driver.perform({ type: 'hideKeyboard' });
     expect(result.dispatched).toBe(true);
     expect(mock.keyEvent).toHaveBeenCalledWith('emulator-5554', 'KEYCODE_BACK');
+    await driver.disconnect();
+  });
+
+  it('launches and terminates only the configured package through ADB', async () => {
+    const driver = new AndroidAdbDriver(backend());
+    await driver.connect({ platform: 'android', targetId: 'emulator-5554', appId: 'com.example.app' });
+    await driver.perform({ type: 'terminateApp' });
+    expect(runAdbShell).toHaveBeenCalledWith('emulator-5554', ['am', 'force-stop', 'com.example.app'], { timeoutMs: 10000 });
+    await driver.perform({ type: 'launchApp' });
+    expect(runAdbShell).toHaveBeenCalledWith('emulator-5554', ['monkey', '-p', 'com.example.app', '-c', 'android.intent.category.LAUNCHER', '1'], { timeoutMs: 15000 });
+    await driver.disconnect();
+  });
+
+  it('rejects malformed app identifiers before native command dispatch', async () => {
+    const driver = new AndroidAdbDriver(backend());
+    await expect(driver.connect({ platform: 'android', targetId: 'emulator-5554', appId: 'com.example; rm -rf /' }))
+      .rejects.toMatchObject({ code: 'CONNECTION_FAILED' });
+    await driver.connect({ platform: 'android', targetId: 'emulator-5554' });
+    await expect(driver.perform({ type: 'launchApp', appId: 'com.example;bad' }))
+      .rejects.toMatchObject({ code: 'INVALID_SPEC' });
+    expect(runAdbShell).not.toHaveBeenCalled();
     await driver.disconnect();
   });
 
