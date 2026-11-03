@@ -19,7 +19,7 @@ export function toJunitXml(result: AutomationRunResult): string {
       name: platform.platform + ' platform setup',
       classname: result.testId,
       time: (platform.durationMs / 1000).toFixed(3),
-      status: platform.success ? 'passed' : 'failed',
+      status: platform.status === 'cancelled' ? 'skipped' : platform.success ? 'passed' : 'failed',
       message: platform.error ?? ''
     }];
   });
@@ -38,6 +38,7 @@ export function toJunitXml(result: AutomationRunResult): string {
   const suiteProperties = '<properties>' +
     '<property name="cancelled" value="' + String(result.cancelled ?? false) + '"/>' +
     '<property name="timedOut" value="' + String(result.timedOut ?? false) + '"/>' +
+    '<property name="cancelledPlatforms" value="' + (result.summary?.cancelledPlatforms ?? 0) + '"/>' +
     '<property name="retriedSteps" value="' + retriedSteps + '"/>' +
     '<property name="totalAttempts" value="' + totalAttempts + '"/>' +
     '</properties>';
