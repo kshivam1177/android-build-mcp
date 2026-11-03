@@ -7,7 +7,7 @@ import type { RunCheckpoint, RunCheckpointStore } from './checkpoint.js';
 import type { AutomationTestDefinition, AutomationTestStep } from './specification.js';
 
 export interface PlatformRunResult {
-  platform: PlatformKind; sessionId?: string; success: boolean; startedAt: string; durationMs: number;
+  platform: PlatformKind; sessionId?: string; success: boolean; status?: 'passed' | 'failed' | 'cancelled'; startedAt: string; durationMs: number;
   steps: Array<{ id: string; type: string; status: 'passed' | 'failed' | 'skipped'; durationMs: number; attempts?: number; error?: string }>;
   error?: string;
   evidence?: { capturedAt: string; screenshot?: { mimeType: string; base64: string }; snapshot?: import('./contracts.js').PlatformSnapshot };
@@ -15,7 +15,7 @@ export interface PlatformRunResult {
 export interface AutomationRunResult {
   runId: string; testId: string; success: boolean; cancelled: boolean; timedOut: boolean;
   startedAt: string; durationMs: number; platforms: PlatformRunResult[];
-  summary: { totalPlatforms: number; completedPlatforms: number; passedPlatforms: number; failedPlatforms: number; totalSteps: number; failedSteps: number; retriedSteps: number; totalAttempts: number };
+  summary: { totalPlatforms: number; completedPlatforms: number; passedPlatforms: number; failedPlatforms: number; cancelledPlatforms: number; totalSteps: number; failedSteps: number; retriedSteps: number; totalAttempts: number };
 }
 export interface AutomationEngineOptions {
   drivers: Partial<Record<PlatformKind, PlatformDriver>>;
@@ -133,7 +133,8 @@ export class AutomationEngine {
       totalPlatforms: definition.platforms.length,
       completedPlatforms: platforms.length,
       passedPlatforms: platforms.filter((platform) => platform.success).length,
-      failedPlatforms: platforms.filter((platform) => !platform.success).length,
+      failedPlatforms: platforms.filter((platform) => !platform.success && platform.status !== 'cancelled').length,
+      cancelledPlatforms: platforms.filter((platform) => platform.status === 'cancelled').length,
       totalSteps: allSteps.length,
       failedSteps: allSteps.filter((step) => step.status === 'failed').length,
       retriedSteps: allSteps.filter((step) => (step.attempts ?? 1) > 1).length,
@@ -149,7 +150,7 @@ export class AutomationEngine {
   private async runPlatform(runId: string, definition: AutomationTestDefinition, platform: PlatformKind, variables: Record<string, string | number | boolean | undefined>, signal?: AbortSignal): Promise<PlatformRunResult> {
     const startedAt = new Date().toISOString(); const started = Date.now(); const steps: PlatformRunResult['steps'] = [];
     const driver = this.options.drivers[platform];
-    if (!driver) return { platform, success: false, startedAt, durationMs: Date.now() - started, steps, error: 'No driver registered for platform ' + platform + '.' };
+    if (!driver) return { platform, success: false, status: 'failed', startedAt, durationMs: Date.now() - started, steps, error: 'No driver registered for platform ' + platform + '.' };
     let sessionId: string | undefined; let platformError: string | undefined;
     let evidence: PlatformRunResult['evidence'];
     try {
@@ -204,7 +205,8 @@ export class AutomationEngine {
       }
     } catch (error) { platformError = error instanceof Error ? error.message : String(error); }
     finally { if (sessionId) { try { await this.sessions.close(sessionId); } catch (error) { platformError ??= 'Session cleanup failed: ' + (error instanceof Error ? error.message : String(error)); } } }
-    return { platform, ...(sessionId ? { sessionId } : {}), success: !platformError && steps.length === definition.steps.length && steps.every((s) => s.status === 'passed'), startedAt, durationMs: Date.now() - started, steps, ...(platformError ? { error: redact(platformError, variables) } : {}), ...(evidence ? { evidence } : {}) };
+    const success = !platformError && steps.length === definition.steps.length && steps.every((s) => s.status === 'passed');
+    return { platform, ...(sessionId ? { sessionId } : {}), success, status: signal?.aborted ? 'cancelled' : success ? 'passed' : 'failed', startedAt, durationMs: Date.now() - started, steps, ...(platformError ? { error: redact(platformError, variables) } : {}), ...(evidence ? { evidence } : {}) };
   }
 }
 
