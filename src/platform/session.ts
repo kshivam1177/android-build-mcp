@@ -39,22 +39,15 @@ export class DriverSessionManager {
     const leaseToken = Symbol(targetKey);
     driverLeases.set(driver, leaseToken);
     targetLeases.set(targetKey, leaseToken);
-    let connected = false;
     try {
       if (signal?.aborted) throw new AutomationError('CANCELLED', 'Connection was cancelled.');
       const session = await driver.connect(config, signal);
-      connected = true;
-      if (signal?.aborted) {
-        await driver.disconnect();
-        throw new AutomationError('CANCELLED', 'Connection was cancelled after the driver connected.');
-      }
+      if (signal?.aborted) throw new AutomationError('CANCELLED', 'Connection was cancelled after the driver connected.');
       const managed = { session, driver, config, targetKey, leaseToken };
       this.sessions.set(session.id, managed);
       return managed;
     } catch (error) {
-      if (!connected) {
-        try { await driver.disconnect(); } catch { /* Preserve connection failure; cleanup is best-effort. */ }
-      }
+      try { await driver.disconnect(); } catch { /* Preserve connection failure; cleanup is best-effort. */ }
       if (driverLeases.get(driver) === leaseToken) driverLeases.delete(driver);
       if (targetLeases.get(targetKey) === leaseToken) targetLeases.delete(targetKey);
       throw error instanceof AutomationError ? error
