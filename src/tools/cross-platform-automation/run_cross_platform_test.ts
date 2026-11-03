@@ -71,7 +71,7 @@ export function register(server: McpServer) {
       lines.push('### ' + platform.platform + ': ' + (platform.success ? 'PASSED' : 'FAILED'));
       lines.push('- Duration: ' + platform.durationMs + ' ms');
       if (platform.error) lines.push('- Error: ' + platform.error);
-      if (platform.evidence && 'screenshotPath' in platform.evidence && platform.evidence.screenshotPath) lines.push('- Screenshot evidence: ' + path.basename(platform.evidence.screenshotPath));
+      if (platform.evidence && 'screenshotPath' in platform.evidence && platform.evidence.screenshotPath) lines.push('- Screenshot evidence: ' + path.basename(String(platform.evidence.screenshotPath)));
       if (platform.evidence?.snapshot) lines.push('- Accessibility snapshot captured: ' + platform.evidence.capturedAt);
       for (const step of platform.steps) {
         lines.push('- [' + step.status.toUpperCase() + '] ' + step.id + ' (' + step.durationMs + ' ms)' + (step.error ? ': ' + step.error : ''));
