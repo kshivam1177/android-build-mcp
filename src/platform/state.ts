@@ -18,7 +18,7 @@ export function classifyUiState(snapshot: PlatformSnapshot): StateClassification
     .toLocaleLowerCase();
   const rules: Array<{ state: ObservedUiState; patterns: RegExp[] }> = [
     { state: 'error', patterns: [/\berror\b/, /\bfailed\b/, /\bsomething went wrong\b/, /\btry again\b/] },
-    { state: 'permission', patterns: [/\\ballow access\\b/, /\\ballow .* to access\\b/, /\\bpermission\\b/, /\\bwhile using the app\\b/] },
+    { state: 'permission', patterns: [/\ballow access\b/, /\ballow\b.*\baccess\b/, /\bpermission\b/, /\bwhile using the app\b/] },
     { state: 'authentication', patterns: [/\bsign in\b/, /\blog in\b/, /\bpassword\b/, /\bone.time password\b/, /\botp\b/] },
     { state: 'validation', patterns: [/\brequired\b/, /\binvalid\b/, /\bplease enter\b/, /\bdoes not match\b/] },
     { state: 'empty', patterns: [/\bno results\b/, /\bnothing here\b/, /\bno data\b/, /\bno items\b/] },
