@@ -1,0 +1,19 @@
+{
+  "schemaVersion": "1.0",
+  "id": "android-app-lifecycle",
+  "name": "Android app lifecycle and keyboard smoke",
+  "platforms": ["android"],
+  "targets": {
+    "android": {
+      "appId": "com.example.app",
+      "targetId": "emulator-5554"
+    }
+  },
+  "ai": { "mode": "disabled" },
+  "policy": { "allowDestructiveActions": false, "maxRecoveryAttempts": 0 },
+  "steps": [
+    { "id": "launch-app", "type": "launchApp" },
+    { "id": "wait-for-home", "type": "waitFor", "condition": { "kind": "visible", "selector": { "strategy": "accessibilityId", "value": "home-screen" } }, "timeoutMs": 15000 },
+    { "id": "dismiss-keyboard-if-open", "type": "hideKeyboard" }
+  ]
+}

@@ -10,6 +10,12 @@ Generated from the registered MCP tool list. Run npm run docs:generate to refres
 | android-cli | android_cli_studio_check |
 | android-cli | android_cli_studio_find_symbol |
 | android-cli | android_cli_studio_version_lookup |
+| cross-platform-automation | check_cross_platform_runtime |
+| cross-platform-automation | diagnose_cross_platform_failure |
+| cross-platform-automation | inspect_cross_platform_target |
+| cross-platform-automation | manage_ios_simulator |
+| cross-platform-automation | run_cross_platform_test |
+| cross-platform-automation | validate_cross_platform_test |
 | debugging | bug_report |
 | debugging | clear_logs |
 | debugging | get_anr_trace |

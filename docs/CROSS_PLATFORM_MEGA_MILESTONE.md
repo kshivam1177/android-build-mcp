@@ -1,0 +1,43 @@
+# Cross-platform automation — mega milestone addendum
+
+This addendum expands the initial driver/orchestrator slice with deterministic quality gates and AI safety boundaries.
+
+## Included in this increment
+
+- Android/iOS keyboard dismissal and app launch/termination actions in the shared test definition and engine.
+- Android keyboard dismissal checks IME visibility first and does not send BACK when the keyboard is already hidden.
+- Native app identifiers are validated before command dispatch to prevent shell metacharacter injection.
+- Native permission prompts are classified as a distinct state; the framework never auto-grants or denies permissions.
+- iOS simulator inventory, boot and shutdown manager plus an MCP tool; boot waits for simulator readiness and shutdown never erases simulator data.
+- iOS simulator manager tests use an injectable command runner and cover macOS gating, idempotent boot and invalid UDIDs.
+
+- Cross-platform runtime preflight MCP tool with Android, Flutter, iOS and Web dependency checks and actionable remediation.
+- Android and iOS `hideKeyboard`, `launchApp` and `terminateApp` actions exposed through the versioned test schema and deterministic engine.
+- Flutter delegates lifecycle and keyboard operations to its selected native OS driver.
+- Native permission prompts are classified as a distinct UI state; permission grant/deny decisions remain explicit test actions, never automatic.
+
+- Snapshot assertion evaluator for existence, visibility, enabled state and exact/contained text.
+- Explainable UI state classification for loading, success, empty, error, validation, authentication and unexpected screens.
+- Explicit action-risk policy. Risk is supplied as intent by the test author or planner; the framework does not guess destructive intent from labels.
+- Recovery advisor that classifies framework failures and proposes next steps without replaying actions.
+- Optional AI assistance gateway. No provider is silently enabled; a provider must be injected by the host. Proposals are bounded and validated, and remain advisory.
+- JUnit XML reporter and common secret redaction utility.
+- Unit tests for assertions, state classification, policy, recovery and JUnit serialization.
+
+## Safety invariants
+
+1. The execution engine does not automatically replay taps, submissions, purchases or deletion actions.
+2. An AI proposal is not an action approval and cannot bypass the action allowlist.
+3. Destructive risk is explicit metadata, not inferred from a selector string.
+4. Reports must preserve failed/skipped distinctions and escape XML output.
+5. Credentials should be supplied as runtime variables and redacted before report/log publication.
+
+## Runtime verification still required
+
+These host-side modules do not establish that Appium/XCUITest, ADB or Agent Browser are installed or operational. Integration verification must run on matching hosts:
+- Android: Linux/macOS/Windows with ADB and an emulator or device.
+- Flutter Android: Flutter app exposing useful accessibility semantics.
+- iOS: macOS with Xcode, Appium 2 and the XCUITest driver.
+- Web: supported Agent Browser CLI and browser runtime.
+
+Do not merge based only on this addendum's unit tests. Run the complete repository test gate and platform smoke tests.

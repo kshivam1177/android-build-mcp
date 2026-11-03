@@ -9,6 +9,7 @@ import { doctorTools } from './tools/doctor/index.js';
 import { workflowDiscoveryTools } from './tools/workflow-discovery/index.js';
 import { androidCliTools } from './tools/android-cli/index.js';
 import { testingIntelligenceTools } from './tools/testing-intelligence/index.js';
+import { crossPlatformAutomationTools } from './tools/cross-platform-automation/index.js';
 import type { ToolModule } from './tools/types.js';
 
 export interface WorkflowDefinition {
@@ -54,7 +55,7 @@ export const WORKFLOWS: WorkflowDefinition[] = [
   {
     name: 'gradle-module',
     description:
-      'Build/test/run/list/stop a standalone Gradle module (pure-JVM/Kotlin library or CLI) - the roughest analogy in this project to Xcode\'s swift-package workflow; Android has no exact equivalent to a runnable SPM target.',
+      "Build/test/run/list/stop a standalone Gradle module (pure-JVM/Kotlin library or CLI) - the closest equivalent in this project to an Xcode Swift Package workflow; Android has no exact equivalent to a runnable SPM target.",
     defaultEnabled: false,
     tools: gradleModuleTools,
   },
@@ -81,6 +82,12 @@ export const WORKFLOWS: WorkflowDefinition[] = [
     description: 'Project test discovery, change-aware test planning, saved UI workflows, native/Flutter test matrices, unified resumable E2E runs, strict evidence gates, and consolidated reports.',
     defaultEnabled: true,
     tools: testingIntelligenceTools,
+  },
+  {
+    name: 'cross-platform-automation',
+    description: 'Cross-platform runtime preflight, iOS simulator management, Android/iOS app lifecycle and keyboard actions, permission-prompt classification, test validation and execution, target inspection, deterministic assertions, failure diagnosis, optional AI assistance, and JSON/Markdown/JUnit reporting.',
+    defaultEnabled: false,
+    tools: crossPlatformAutomationTools,
   },
   {
     name: 'workflow-discovery',

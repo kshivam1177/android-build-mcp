@@ -1,0 +1,22 @@
+{
+  "schemaVersion": "1.0",
+  "id": "login-smoke",
+  "name": "Cross-platform login smoke test",
+  "platforms": ["android", "flutter", "ios", "web"],
+  "targets": {
+    "android": { "appId": "com.example.app", "targetId": "emulator-5554" },
+    "flutter": { "appId": "com.example.flutterapp", "targetId": "emulator-5554", "metadata": { "osPlatform": "android" } },
+    "ios": { "appId": "com.example.app", "metadata": { "appiumUrl": "http://127.0.0.1:4723", "deviceName": "iPhone Simulator", "appPath": "/absolute/path/to/App.app" } },
+    "web": { "baseUrl": "https://example.test" }
+  },
+  "variables": { "USERNAME": "replace-at-runtime", "PASSWORD": "replace-at-runtime" },
+  "ai": { "mode": "disabled" },
+  "policy": { "allowDestructiveActions": false, "maxRecoveryAttempts": 0 },
+  "steps": [
+    { "id": "enter-username", "type": "type", "selector": { "strategy": "accessibilityId", "value": "username" }, "value": "\${USERNAME}" },
+    { "id": "enter-password", "type": "type", "selector": { "strategy": "accessibilityId", "value": "password" }, "value": "\${PASSWORD}", "sensitive": true },
+    { "id": "submit-login", "type": "tap", "selector": { "strategy": "accessibilityId", "value": "login-submit" } },
+    { "id": "wait-for-home", "type": "waitFor", "condition": { "kind": "visible", "selector": { "strategy": "accessibilityId", "value": "home-screen" } }, "timeoutMs": 15000 },
+    { "id": "assert-home-title", "type": "assert", "assertion": { "kind": "textContains", "selector": { "strategy": "accessibilityId", "value": "home-title" }, "expected": "Home" } }
+  ]
+}
