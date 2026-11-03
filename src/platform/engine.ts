@@ -32,7 +32,7 @@ export class AutomationEngine {
     let sessionId: string | undefined; let platformError: string | undefined;
     try {
       const target = definition.targets?.[platform];
-      const config: DriverConfig = { platform, ...(target?.targetId ? { targetId: target.targetId } : {}), ...(target?.appId ? { appId: target.appId } : {}), ...(target?.baseUrl ? { baseUrl: target.baseUrl } : {}) };
+      const config: DriverConfig = { platform, ...(target?.targetId ? { targetId: target.targetId } : {}), ...(target?.appId ? { appId: target.appId } : {}), ...(target?.baseUrl ? { baseUrl: target.baseUrl } : {}), ...(target?.metadata ? { metadata: target.metadata } : {}) };
       const managed = await this.sessions.open(driver, config, signal); sessionId = managed.session.id;
       const capabilities = await driver.capabilities();
       for (const step of definition.steps) {
