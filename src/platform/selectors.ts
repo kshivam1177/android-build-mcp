@@ -3,7 +3,8 @@ import { AutomationError, type PlatformSnapshot, type ResolvedElement, type Sema
 /** Resolve only against a fresh, explicit snapshot; ambiguity is always an error. */
 export function resolveSemanticSelector(
   snapshot: PlatformSnapshot,
-  selector: SemanticSelector
+  selector: SemanticSelector,
+  options: { allowDisabled?: boolean } = {}
 ): ResolvedElement {
   if (!selector.value.trim()) {
     throw new AutomationError('INVALID_SPEC', 'Selector value cannot be empty.', { selector });
@@ -27,7 +28,7 @@ export function resolveSemanticSelector(
     if (!selected) throw new AutomationError('ELEMENT_NOT_FOUND', 'Selector index is outside the match set.', {
       index: selector.index, matchCount: matches.length
     });
-    return resolved(snapshot, selected);
+    return resolved(snapshot, selected, options.allowDisabled === true);
   }
   if (matches.length > 1) {
     throw new AutomationError('AMBIGUOUS_SELECTOR', 'Selector matched multiple elements; add a stable qualifier or index.', {
@@ -35,7 +36,7 @@ export function resolveSemanticSelector(
       refs: matches.map((node) => node.ref)
     });
   }
-  return resolved(snapshot, matches[0]!);
+  return resolved(snapshot, matches[0]!, options.allowDisabled === true);
 }
 
 export function assertFreshReference(snapshot: PlatformSnapshot, element: ResolvedElement): void {
@@ -49,8 +50,8 @@ export function assertFreshReference(snapshot: PlatformSnapshot, element: Resolv
   }
 }
 
-function resolved(snapshot: PlatformSnapshot, node: SnapshotNode): ResolvedElement {
-  if (node.enabled === false) {
+function resolved(snapshot: PlatformSnapshot, node: SnapshotNode, allowDisabled = false): ResolvedElement {
+  if (!allowDisabled && node.enabled === false) {
     throw new AutomationError('ELEMENT_DISABLED', 'Matched element is disabled.', { ref: node.ref });
   }
   return {
