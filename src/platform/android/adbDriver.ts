@@ -72,6 +72,7 @@ export class AndroidAdbDriver implements PlatformDriver {
     const started = Date.now();
     const targetId = this.requireTarget();
     let target: ResolvedElement | null = null;
+    let dispatched = true;
     try {
       switch (action.type) {
         case 'tap':
@@ -106,7 +107,13 @@ export class AndroidAdbDriver implements PlatformDriver {
           await this.backend.swipe(targetId, x, y, Math.max(0, Math.min(width, x + delta[0]!)), Math.max(0, Math.min(height, y + delta[1]!)));
           break;
         }
-        case 'hideKeyboard': await this.backend.keyEvent(targetId, 'KEYCODE_BACK'); break;
+        case 'hideKeyboard': {
+          const ime = await runAdbShell(targetId, ['dumpsys', 'input_method'], { timeoutMs: 5000 });
+          const keyboardVisible = /\\bmInputShown=true\\b|\\bmIsInputViewShown=true\\b|\\bmShowRequested=true\\b/i.test(ime.stdout);
+          if (keyboardVisible) await this.backend.keyEvent(targetId, 'KEYCODE_BACK');
+          else dispatched = false;
+          break;
+        }
         case 'launchApp': {
           const appId = action.appId ?? this.appId;
           if (!appId) throw new AutomationError('INVALID_SPEC', 'launchApp requires an appId in the action or target configuration.');
@@ -123,7 +130,7 @@ export class AndroidAdbDriver implements PlatformDriver {
         }
         case 'navigate': throw new AutomationError('UNSUPPORTED_CAPABILITY', 'Native Android driver does not support URL navigation.');
       }
-      return { action: action.type, startedAt, durationMs: Date.now() - started, target, dispatched: true };
+      return { action: action.type, startedAt, durationMs: Date.now() - started, target, dispatched };
     } catch (error) {
       if (error instanceof AutomationError) throw error;
       throw new AutomationError('ACTION_FAILED', 'Android action failed.', { targetId, action: action.type }, { cause: error });
