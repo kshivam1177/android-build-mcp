@@ -1,5 +1,12 @@
 import validateCrossPlatformTest from './validate_cross_platform_test.js';
 import runCrossPlatformTest from './run_cross_platform_test.js';
+import inspectCrossPlatformTarget from './inspect_cross_platform_target.js';
+import diagnoseCrossPlatformFailure from './diagnose_cross_platform_failure.js';
 
-export const crossPlatformAutomationTools = [validateCrossPlatformTest, runCrossPlatformTest];
-export { validateCrossPlatformTest, runCrossPlatformTest };
+export const crossPlatformAutomationTools = [
+  validateCrossPlatformTest,
+  runCrossPlatformTest,
+  inspectCrossPlatformTarget,
+  diagnoseCrossPlatformFailure
+];
+export { validateCrossPlatformTest, runCrossPlatformTest, inspectCrossPlatformTarget, diagnoseCrossPlatformFailure };
