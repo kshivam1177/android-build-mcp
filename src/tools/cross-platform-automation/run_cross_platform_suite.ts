@@ -138,17 +138,20 @@ export function register(server: McpServer) {
         if (args.stopOnFailure) break;
       }
     }
+    const finalState = await gitState(root);
+    const sourceRevisionUnchanged = state.gitHeadSha !== null && state.gitHeadSha === finalState.gitHeadSha;
+    const workspaceCleanThroughout = state.workingTreeClean === true && finalState.workingTreeClean === true;
     const definitionsUnchanged = (await Promise.all(selected.map(async (item) => {
       try { return createHash('sha256').update(await fs.readFile(path.join(suiteDirectory, item.file))).digest('hex') === item.sha256; }
       catch { return false; }
     }))).every(Boolean);
-    const gate = evaluateCrossPlatformSuiteGate({ outcomes, gitHeadSha: state.gitHeadSha, workingTreeClean: state.workingTreeClean, selectedCount: selected.length, definitionManifestSha256, definitionsUnchanged });
+    const gate = evaluateCrossPlatformSuiteGate({ outcomes, gitHeadSha: sourceRevisionUnchanged ? finalState.gitHeadSha : null, workingTreeClean: workspaceCleanThroughout, selectedCount: selected.length, definitionManifestSha256, definitionsUnchanged });
     const secrets = selected.flatMap(({ definition }) => Object.values(definition.variables ?? {}).filter((value): value is string => typeof value === 'string'));
-    const report = { schemaVersion: 1, runId, generatedAt: new Date().toISOString(), projectRoot: root, suiteDirectory: relative, gitHeadSha: state.gitHeadSha, workingTreeClean: state.workingTreeClean, definitionManifestSha256, definitionsUnchanged, definitionFiles: selected.map(({ file, sha256 }) => ({ file, sha256 })), gate, selectedCount: selected.length, executedCount: outcomes.length, outcomes };
+    const report = { schemaVersion: 1, runId, generatedAt: new Date().toISOString(), projectRoot: root, suiteDirectory: relative, gitHeadSha: finalState.gitHeadSha, workingTreeClean: workspaceCleanThroughout, sourceRevisionUnchanged, definitionManifestSha256, definitionsUnchanged, definitionFiles: selected.map(({ file, sha256 }) => ({ file, sha256 })), gate, selectedCount: selected.length, executedCount: outcomes.length, outcomes };
     const jsonPath = path.join(reportDirectory, 'cross-platform-suite.json');
     const markdownPath = path.join(reportDirectory, 'cross-platform-suite.md');
     const junitPath = path.join(reportDirectory, 'junit.xml');
-    const lines = ['# Cross-platform suite report', '', '- Run: ' + runId, '- Decision: ' + gate.decision, '- Git HEAD: ' + (state.gitHeadSha ?? 'unavailable'), '- Working tree clean: ' + String(state.workingTreeClean), '- Definition manifest SHA-256: ' + definitionManifestSha256, '- Definitions unchanged: ' + String(definitionsUnchanged), '- Definitions: ' + gate.passed + ' passed; ' + gate.failed + ' failed; ' + gate.incomplete + ' incomplete', '- Executed: ' + outcomes.length + ' / ' + selected.length, '', '## Test results', ''];
+    const lines = ['# Cross-platform suite report', '', '- Run: ' + runId, '- Decision: ' + gate.decision, '- Git HEAD: ' + (finalState.gitHeadSha ?? 'unavailable'), '- Source revision unchanged: ' + String(sourceRevisionUnchanged), '- Working tree clean throughout: ' + String(workspaceCleanThroughout), '- Definition manifest SHA-256: ' + definitionManifestSha256, '- Definitions unchanged: ' + String(definitionsUnchanged), '- Definitions: ' + gate.passed + ' passed; ' + gate.failed + ' failed; ' + gate.incomplete + ' incomplete', '- Executed: ' + outcomes.length + ' / ' + selected.length, '', '## Test results', ''];
     for (const outcome of outcomes) lines.push('### ' + outcome.id + ' — ' + (outcome.success ? 'PASSED' : 'FAILED'), '', '- Definition: ' + outcome.file, '- Duration: ' + outcome.durationMs + ' ms', ...(outcome.error ? ['- Error: ' + outcome.error] : []), '');
     lines.push('## Gate rationale', '', gate.reason, '');
     await Promise.all([
