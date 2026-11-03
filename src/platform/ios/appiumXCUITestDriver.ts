@@ -13,6 +13,7 @@ export class AppiumXCUITestDriver implements PlatformDriver {
   private appiumSessionId?: string;
   private generation = 0;
   private timeoutMs = 60000;
+  private bundleId?: string;
 
   async connect(config: DriverConfig, signal?: AbortSignal): Promise<DriverSession> {
     if (signal?.aborted) throw new AutomationError('CANCELLED', 'iOS connection cancelled.');
@@ -22,6 +23,7 @@ export class AppiumXCUITestDriver implements PlatformDriver {
     const platformVersion = config.metadata?.platformVersion;
     const udid = config.metadata?.udid;
     const app = config.metadata?.appPath;
+    this.bundleId = config.appId;
     const capabilities: Record<string, unknown> = {
       platformName: 'iOS',
       'appium:automationName': 'XCUITest',
@@ -45,7 +47,7 @@ export class AppiumXCUITestDriver implements PlatformDriver {
   async capabilities(): Promise<PlatformCapabilities> {
     return { platform: 'ios', snapshots: true, accessibilityTree: true, screenshots: true, gestures: true,
       appLifecycle: true, browserNavigation: false, nativeDialogs: true,
-      supportedActions: ['tap', 'type', 'longPress', 'swipe', 'back', 'wait'] };
+      supportedActions: ['tap', 'type', 'longPress', 'swipe', 'back', 'wait', 'hideKeyboard', 'launchApp', 'terminateApp'] };
   }
 
   async snapshot(signal?: AbortSignal): Promise<PlatformSnapshot> {
@@ -103,6 +105,19 @@ export class AppiumXCUITestDriver implements PlatformDriver {
       case 'key':
         throw new AutomationError('UNSUPPORTED_CAPABILITY', 'Generic key events are not portable on iOS; use semantic controls.');
       case 'wait': await delay(action.timeoutMs ?? 250, signal); break;
+      case 'hideKeyboard': await this.request(`/session/${sid}/appium/device/hide_keyboard`, { method: 'POST', body: '{}', signal }); break;
+      case 'launchApp': {
+        const bundleId = action.appId ?? this.bundleId;
+        if (!bundleId) throw new AutomationError('INVALID_SPEC', 'launchApp requires an iOS bundle id in the action or target configuration.');
+        await this.request(`/session/${sid}/appium/device/activate_app`, { method: 'POST', body: JSON.stringify({ bundleId }), signal });
+        break;
+      }
+      case 'terminateApp': {
+        const bundleId = action.appId ?? this.bundleId;
+        if (!bundleId) throw new AutomationError('INVALID_SPEC', 'terminateApp requires an iOS bundle id in the action or target configuration.');
+        await this.request(`/session/${sid}/appium/device/terminate_app`, { method: 'POST', body: JSON.stringify({ bundleId }), signal });
+        break;
+      }
       case 'navigate': throw new AutomationError('UNSUPPORTED_CAPABILITY', 'URL navigation is not supported by the native XCUITest driver.');
     }
     return { action: action.type, startedAt, durationMs: Date.now() - started, target, dispatched: true };
@@ -137,7 +152,7 @@ export class AppiumXCUITestDriver implements PlatformDriver {
     if (!this.appiumSessionId) return;
     const id = this.appiumSessionId;
     try { await this.request(`/session/${id}`, { method: 'DELETE' }); }
-    finally { this.appiumSessionId = undefined; this.session = undefined; }
+    finally { this.appiumSessionId = undefined; this.session = undefined; this.bundleId = undefined; }
   }
 
   private async findElement(selector: SemanticSelector, signal?: AbortSignal): Promise<string> {
