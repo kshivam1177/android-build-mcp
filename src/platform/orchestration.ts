@@ -17,16 +17,18 @@ export async function runBounded<T, R>(
   const results = new Array<R>(items.length);
   let nextIndex = 0;
   let firstError: unknown;
+  let failed = false;
 
   const consume = async (): Promise<void> => {
     while (true) {
-      if (signal?.aborted) return;
+      if (signal?.aborted || failed) return;
       const index = nextIndex++;
       if (index >= items.length) return;
       try {
         results[index] = await worker(items[index]!, index);
       } catch (error) {
-        firstError ??= error;
+        if (!failed) firstError = error;
+        failed = true;
         return;
       }
     }
