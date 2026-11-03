@@ -6,6 +6,7 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { withErrorHandling, textResult } from '../../utils/response.js';
 import { resolveProjectRoot } from '../../utils/paths.js';
 import { AutomationEngine } from '../../platform/engine.js';
+import { FileRunCheckpointStore } from '../../platform/checkpoint.js';
 import { createPlatformDrivers } from '../../platform/drivers.js';
 import { parseAutomationTest } from '../../platform/specification.js';
 import { toJunitXml } from '../../platform/reporting/junit.js';
@@ -22,13 +23,27 @@ export function register(server: McpServer) {
     inputSchema: {
       testDefinition: z.unknown().describe('Complete schemaVersion 1.0 test definition.'),
       projectPath: z.string().optional().describe('Project root for report output; defaults to the current working directory.'),
-      variables: z.record(z.string(), z.union([z.string(), z.number(), z.boolean()])).optional().describe('Runtime variables. Keep credentials out of the test definition and report.')
+      variables: z.record(z.string(), z.union([z.string(), z.number(), z.boolean()])).optional().describe('Runtime variables. Keep credentials out of the test definition and report.'),
+      maxConcurrency: z.number().int().min(1).max(4).optional().describe('Maximum independent platform targets to execute concurrently. Defaults to 2.'),
+      checkpointPath: z.string().optional().describe('Optional project-relative JSON checkpoint path. Reuse the same path with resume=true to continue a run.'),
+      resume: z.boolean().optional().default(false).describe('Resume from completed platform checkpoints. Interrupted platforms are not replayed unless explicitly allowed.'),
+      restartInterruptedPlatforms: z.boolean().optional().default(false).describe('Explicitly restart platforms that were active when the previous process stopped; may replay non-idempotent actions.')
     },
     annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: false, openWorldHint: true }
-  }, withErrorHandling(async (args: { testDefinition: unknown; projectPath?: string; variables?: Record<string, string | number | boolean> }) => {
+  }, withErrorHandling(async (args: { testDefinition: unknown; projectPath?: string; variables?: Record<string, string | number | boolean>; maxConcurrency?: number; checkpointPath?: string; resume?: boolean; restartInterruptedPlatforms?: boolean }) => {
     const definition = parseAutomationTest(args.testDefinition);
     const projectRoot = resolveProjectRoot(args.projectPath ?? process.cwd());
-    const result = await new AutomationEngine({ drivers: createPlatformDrivers() }).run(definition, { variables: args.variables });
+    const checkpointFile = args.checkpointPath ? path.resolve(projectRoot, args.checkpointPath) : undefined;
+    if (checkpointFile) {
+      const relative = path.relative(projectRoot, checkpointFile);
+      if (relative.startsWith('..') || path.isAbsolute(relative)) throw new Error('checkpointPath must remain inside the project root.');
+    }
+    if (args.resume && !checkpointFile) throw new Error('resume=true requires checkpointPath.');
+    const result = await new AutomationEngine({ drivers: createPlatformDrivers(), maxConcurrency: args.maxConcurrency }).run(definition, {
+      variables: args.variables, maxConcurrency: args.maxConcurrency,
+      ...(checkpointFile ? { checkpointStore: new FileRunCheckpointStore(checkpointFile) } : {}),
+      resume: args.resume, restartInterruptedPlatforms: args.restartInterruptedPlatforms
+    });
     const date = new Date();
     const dateFolder = date.toISOString().slice(0, 10);
     const timeFolder = date.toISOString().slice(11, 19).replace(/:/g, '-') + '-' + randomUUID().slice(0, 8);
