@@ -55,6 +55,15 @@ describe('cross-platform evidence manifest', () => {
     expect(result.unsafe).toContain('../outside.txt');
   });
 
+  it('marks symlink additions as unsafe during validation', async () => {
+    const directory = await createReportDirectory();
+    await createEvidenceManifest({ reportDirectory: directory, runId: 'run-1', gitHeadSha: null, definitionManifestSha256: null });
+    await fs.symlink(path.join(directory, 'report.json'), path.join(directory, 'unexpected-link.json'));
+    const result = await validateEvidenceManifest(directory);
+    expect(result.valid).toBe(false);
+    expect(result.unsafe.length).toBeGreaterThan(0);
+  });
+
   it('rejects symlinks inside evidence bundles', async () => {
     const directory = await createReportDirectory();
     await fs.symlink(path.join(directory, 'report.json'), path.join(directory, 'linked-report.json'));
