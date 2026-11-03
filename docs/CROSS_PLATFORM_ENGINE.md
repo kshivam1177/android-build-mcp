@@ -70,4 +70,4 @@ Example lifecycle steps:
 
 ## Current limitations
 
-This implementation does not yet supply a hosted AI provider, a full iOS simulator lifecycle manager, Patrol integration, or a browser binary installer. Platform E2E must be verified on actual compatible hosts. iOS requires macOS; successful host-side unit tests alone do not prove device integration.
+This implementation does not yet supply a hosted AI provider, full iOS signing/physical-device provisioning, Patrol integration, or a browser binary installer. Platform E2E must be verified on actual compatible hosts. iOS requires macOS; successful host-side unit tests alone do not prove device integration.
