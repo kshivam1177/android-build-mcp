@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { AutomationError, type DriverConfig, type PlatformAction, type PlatformDriver, type PlatformKind } from './contracts.js';
 import { evaluateSnapshotAssertion } from './assertions.js';
 import { DriverSessionManager } from './session.js';
+import { runBounded } from './orchestration.js';
 import type { AutomationTestDefinition, AutomationTestStep } from './specification.js';
 
 export interface PlatformRunResult {
@@ -15,17 +16,24 @@ export interface AutomationEngineOptions {
   drivers: Partial<Record<PlatformKind, PlatformDriver>>;
   sessions?: DriverSessionManager;
   onStep?: (event: { runId: string; platform: PlatformKind; stepId: string; status: 'started' | 'passed' | 'failed' }) => void;
+  /** Maximum number of independent platform targets to execute simultaneously. Defaults to 2. */
+  maxConcurrency?: number;
 }
 
 /** Deterministic multi-platform runner. Platform failures are isolated; AI is not called from this execution path. */
 export class AutomationEngine {
   private readonly sessions: DriverSessionManager;
   constructor(private readonly options: AutomationEngineOptions) { this.sessions = options.sessions ?? new DriverSessionManager(); }
-  async run(definition: AutomationTestDefinition, options: { signal?: AbortSignal; variables?: Record<string, string | number | boolean> } = {}): Promise<AutomationRunResult> {
+  async run(definition: AutomationTestDefinition, options: { signal?: AbortSignal; variables?: Record<string, string | number | boolean>; maxConcurrency?: number } = {}): Promise<AutomationRunResult> {
     const runId = randomUUID(); const startedAt = new Date().toISOString(); const started = Date.now();
-    const results: PlatformRunResult[] = []; const variables = { ...definition.variables, ...options.variables };
-    for (const platform of definition.platforms) { if (options.signal?.aborted) break; results.push(await this.runPlatform(runId, definition, platform, variables, options.signal)); }
-    return { runId, testId: definition.id, startedAt, durationMs: Date.now() - started, success: results.length === definition.platforms.length && results.every((r) => r.success), platforms: results };
+    const variables = { ...definition.variables, ...options.variables };
+    const platforms = await runBounded(
+      definition.platforms,
+      options.maxConcurrency ?? this.options.maxConcurrency ?? 2,
+      (platform) => this.runPlatform(runId, definition, platform, variables, options.signal),
+      options.signal
+    );
+    return { runId, testId: definition.id, startedAt, durationMs: Date.now() - started, success: platforms.length === definition.platforms.length && platforms.every((result) => result.success), platforms };
   }
   private async runPlatform(runId: string, definition: AutomationTestDefinition, platform: PlatformKind, variables: Record<string, string | number | boolean | undefined>, signal?: AbortSignal): Promise<PlatformRunResult> {
     const startedAt = new Date().toISOString(); const started = Date.now(); const steps: PlatformRunResult['steps'] = [];
