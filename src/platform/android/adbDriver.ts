@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { adbBackend } from '../../automation/adbBackend.js';
+import { runAdbShell } from '../../utils/adb.js';
 import type { AutomationBackend } from '../../automation/backend.js';
 import { parseUiHierarchy } from '../../automation/uiHierarchy.js';
 import { AutomationError, type DriverConfig, type DriverSession, type PlatformCapabilities, type PlatformDriver, type PlatformSnapshot, type ResolvedElement, type SemanticSelector, type WaitCondition, type ActionResult, type EvidenceBundle, type PlatformAction } from '../contracts.js';
@@ -9,6 +10,7 @@ import { resolveSemanticSelector } from '../selectors.js';
 export class AndroidAdbDriver implements PlatformDriver {
   readonly platform = 'android' as const;
   private targetId?: string;
+  private appId?: string;
   private session?: DriverSession;
   private generation = 0;
   constructor(private readonly backend: AutomationBackend = adbBackend) {}
@@ -19,6 +21,7 @@ export class AndroidAdbDriver implements PlatformDriver {
     try {
       if (!(await this.backend.isAvailable(config.targetId))) throw new Error('ADB backend unavailable.');
       this.targetId = config.targetId;
+      this.appId = config.appId;
       this.session = { id: randomUUID(), platform: 'android', targetId: config.targetId, connectedAt: new Date().toISOString() };
       return this.session;
     } catch (error) {
@@ -29,7 +32,7 @@ export class AndroidAdbDriver implements PlatformDriver {
   async capabilities(): Promise<PlatformCapabilities> {
     return { platform: 'android', snapshots: true, accessibilityTree: true, screenshots: true, gestures: true,
       appLifecycle: true, browserNavigation: false, nativeDialogs: true,
-      supportedActions: ['tap', 'type', 'longPress', 'swipe', 'back', 'key', 'wait'] };
+      supportedActions: ['tap', 'type', 'longPress', 'swipe', 'back', 'key', 'wait', 'hideKeyboard', 'launchApp', 'terminateApp'] };
   }
 
   async snapshot(signal?: AbortSignal): Promise<PlatformSnapshot> {
@@ -103,6 +106,19 @@ export class AndroidAdbDriver implements PlatformDriver {
           await this.backend.swipe(targetId, x, y, Math.max(0, Math.min(width, x + delta[0]!)), Math.max(0, Math.min(height, y + delta[1]!)));
           break;
         }
+        case 'hideKeyboard': await this.backend.keyEvent(targetId, 'KEYCODE_BACK'); break;
+        case 'launchApp': {
+          const appId = action.appId ?? this.appId;
+          if (!appId) throw new AutomationError('INVALID_SPEC', 'launchApp requires an appId in the action or target configuration.');
+          await runAdbShell(targetId, ['monkey', '-p', appId, '-c', 'android.intent.category.LAUNCHER', '1'], { timeoutMs: 15000 });
+          break;
+        }
+        case 'terminateApp': {
+          const appId = action.appId ?? this.appId;
+          if (!appId) throw new AutomationError('INVALID_SPEC', 'terminateApp requires an appId in the action or target configuration.');
+          await runAdbShell(targetId, ['am', 'force-stop', appId], { timeoutMs: 10000 });
+          break;
+        }
         case 'navigate': throw new AutomationError('UNSUPPORTED_CAPABILITY', 'Native Android driver does not support URL navigation.');
       }
       return { action: action.type, startedAt, durationMs: Date.now() - started, target, dispatched: true };
@@ -141,7 +157,7 @@ export class AndroidAdbDriver implements PlatformDriver {
     return { capturedAt: new Date().toISOString(), screenshot, snapshot };
   }
 
-  async disconnect(): Promise<void> { this.session = undefined; this.targetId = undefined; }
+  async disconnect(): Promise<void> { this.session = undefined; this.targetId = undefined; this.appId = undefined; }
   private requireTarget(): string {
     if (!this.session || !this.targetId) throw new AutomationError('SESSION_CLOSED', 'Android driver is not connected.');
     return this.targetId;
