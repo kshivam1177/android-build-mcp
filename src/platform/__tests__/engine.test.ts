@@ -53,6 +53,26 @@ describe('AutomationEngine', () => {
     expect(result.platforms[1]?.success).toBe(true);
   });
 
+  it('dispatches keyboard and app lifecycle steps through the driver', async () => {
+    const android = fakeDriver('android');
+    vi.mocked(android.capabilities).mockResolvedValue({
+      platform: 'android', snapshots: true, accessibilityTree: true, screenshots: true, gestures: true,
+      appLifecycle: true, browserNavigation: false, nativeDialogs: true,
+      supportedActions: ['hideKeyboard', 'launchApp', 'terminateApp']
+    });
+    const definition = parseAutomationTest({
+      schemaVersion: '1.0', id: 'lifecycle-engine', name: 'Lifecycle engine', platforms: ['android'],
+      steps: [
+        { id: 'hide', type: 'hideKeyboard' },
+        { id: 'launch', type: 'launchApp', appId: 'com.example.app' },
+        { id: 'stop', type: 'terminateApp' }
+      ]
+    });
+    const result = await new AutomationEngine({ drivers: { android } }).run(definition);
+    expect(result.success).toBe(true);
+    expect(vi.mocked(android.perform).mock.calls.map((call) => call[0].type)).toEqual(['hideKeyboard', 'launchApp', 'terminateApp']);
+  });
+
   it('runs waitFor through the driver condition API', async () => {
     const android = fakeDriver('android');
     const definition = parseAutomationTest({
