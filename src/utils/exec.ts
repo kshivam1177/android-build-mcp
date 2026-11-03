@@ -94,12 +94,14 @@ function execute(command: string, args: string[], options: ExecOptions): Promise
 
     options.signal?.addEventListener('abort', onAbort, { once: true });
     if (options.signal?.aborted) onAbort();
-    timeoutTimer = setTimeout(() => rejectOnce(new AndroidBuildMcpError(
-      'TIMEOUT', `Command timed out after ${timeoutMs}ms: ${displayCommand}`, { command: displayCommand, timeoutMs }
-    )), timeoutMs);
-    timeoutTimer.unref?.();
-    if (options.input !== undefined) child.stdin?.write(options.input);
-    child.stdin?.end();
+    if (!settled) {
+      timeoutTimer = setTimeout(() => rejectOnce(new AndroidBuildMcpError(
+        'TIMEOUT', `Command timed out after ${timeoutMs}ms: ${displayCommand}`, { command: displayCommand, timeoutMs }
+      )), timeoutMs);
+      timeoutTimer.unref?.();
+      if (options.input !== undefined) child.stdin?.write(options.input);
+      child.stdin?.end();
+    }
   });
 }
 
