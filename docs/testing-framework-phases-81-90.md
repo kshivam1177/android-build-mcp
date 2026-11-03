@@ -14,6 +14,10 @@ Make cross-platform test output independently verifiable after a run. A report s
 - Validation detects missing, modified and unexpected files, duplicate paths, traversal attempts and symlinks.
 - Report-directory validation is restricted to real directories beneath `.androidmcp-framework/test-reports/`; internal checkpoint state under `.runs` is excluded.
 - Unit tests cover valid manifests, tampering, missing and unexpected files, traversal and symlink rejection.
+- New MCP tool: `manage_cross_platform_artifacts` for report retention inspection and pruning.
+- Retention inspection is read-only; pruning is dry-run by default and requires an explicit `confirm=true` after reviewing candidates.
+- Pruning only selects old, framework-named suite run directories with a regular evidence manifest. It never targets `.runs` checkpoints or arbitrary report-root files.
+- Unit tests cover old generated reports, missing manifests, non-generated files and symlinked date folders.
 
 ## Validate a report
 
@@ -40,6 +44,18 @@ CI/release systems should require both the suite's execution gate and this integ
 - Reports may include screenshots or UI snapshots containing customer data. Apply project-specific retention and access controls before uploading them to shared CI artifacts.
 - SHA-256 provides tamper detection only when the manifest itself is protected. For supply-chain attestation, sign the manifest or bind it to a trusted CI provenance service in a later milestone.
 
+## Inspect and prune old reports
+
+Inspect candidates older than the default 30-day retention window:
+
+    manage_cross_platform_artifacts(action="inspect", retentionDays=30)
+
+Pruning defaults to dry-run. After reviewing the exact candidate paths, execute with both `dryRun=false` and `confirm=true`:
+
+    manage_cross_platform_artifacts(action="prune", retentionDays=30, dryRun=false, confirm=true)
+
+Only framework-generated run directories with an evidence manifest are eligible. The tool does not delete checkpoint state, arbitrary files or unrecognized folder names.
+
 ## Remaining work
 
-This phase creates a verifiable artifact contract, not a hosted CI device farm. Follow-on work should add configurable retention/pruning, signed attestations, remote worker agents, cross-host lease coordination, platform-specific CI runner provisioning, artifact upload/download adapters, failure replay and coverage analytics. Physical Android, macOS/iOS and browser workers remain necessary for genuine platform E2E.
+This phase creates a verifiable artifact contract, not a hosted CI device farm. Follow-on work should add signed attestations, remote worker agents, cross-host lease coordination, platform-specific CI runner provisioning, artifact upload/download adapters, failure replay and coverage analytics. Physical Android, macOS/iOS and browser workers remain necessary for genuine platform E2E.
