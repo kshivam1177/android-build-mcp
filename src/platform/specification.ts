@@ -26,7 +26,8 @@ export const automationTestSchema = z.object({
   targets: z.record(z.enum(['android', 'flutter', 'ios', 'web']), z.object({
     appId: z.string().optional(),
     baseUrl: z.string().url().optional(),
-    targetId: z.string().optional()
+    targetId: z.string().optional(),
+    metadata: z.record(z.string(), z.union([z.string(), z.number(), z.boolean()])).optional()
   }).strict()).optional(),
   variables: z.record(z.string(), z.union([z.string(), z.number(), z.boolean()])).optional(),
   ai: z.object({ mode: z.enum(['disabled', 'assisted', 'discovery']).default('assisted') }).default({ mode: 'assisted' }),
