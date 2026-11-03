@@ -32,10 +32,11 @@ export const adbBackend: AutomationBackend = {
   async dumpHierarchy(targetId: string, signal?: AbortSignal): Promise<string> {
     try {
       await runAdbShell(targetId, ['uiautomator', 'dump', '--compressed', DUMP_PATH], { timeoutMs: 20_000, signal });
-    } catch {
-      await runAdbShell(targetId, ['uiautomator', 'dump', DUMP_PATH], { timeoutMs: 20_000 });
+    } catch (error) {
+      if (signal?.aborted) throw error;
+      await runAdbShell(targetId, ['uiautomator', 'dump', DUMP_PATH], { timeoutMs: 20_000, signal });
     }
-    const result = await runAdbShell(targetId, ['cat', DUMP_PATH], { timeoutMs: 20_000 });
+    const result = await runAdbShell(targetId, ['cat', DUMP_PATH], { timeoutMs: 20_000, signal });
     if (!result.stdout.includes('<hierarchy')) {
       throw new AndroidBuildMcpError(
         'COMMAND_FAILED',
@@ -79,7 +80,7 @@ export const adbBackend: AutomationBackend = {
       String(Math.round(endX)),
       String(Math.round(endY)),
       String(durationMs),
-    ]);
+    ], { signal });
   },
 
   async typeText(targetId: string, text: string, signal?: AbortSignal): Promise<void> {
