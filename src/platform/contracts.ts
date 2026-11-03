@@ -73,7 +73,10 @@ export type PlatformAction =
   | { type: 'back' }
   | { type: 'key'; key: string }
   | { type: 'navigate'; url: string }
-  | { type: 'wait'; timeoutMs?: number };
+  | { type: 'wait'; timeoutMs?: number }
+  | { type: 'hideKeyboard' }
+  | { type: 'launchApp'; appId?: string }
+  | { type: 'terminateApp'; appId?: string };
 
 export type WaitCondition =
   | { kind: 'visible'; selector: SemanticSelector }
