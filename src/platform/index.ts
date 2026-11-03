@@ -16,3 +16,6 @@ export * from './flutter/semanticsDriver.js';
 export * from './drivers.js';
 export * from './preflight.js';
 export * from './ios/simulator.js';
+
+export * from './orchestration.js';
+export * from './checkpoint.js';
