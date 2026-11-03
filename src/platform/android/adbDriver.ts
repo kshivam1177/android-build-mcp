@@ -81,7 +81,10 @@ export class AndroidAdbDriver implements PlatformDriver {
           const x = bounds.x + bounds.width / 2;
           const y = bounds.y + bounds.height / 2;
           if (action.type === 'tap') await this.backend.tap(targetId, x, y);
-          else if (action.type === 'type') await this.backend.typeText(targetId, action.text);
+          else if (action.type === 'type') {
+            if (action.clearFirst) throw new AutomationError('UNSUPPORTED_CAPABILITY', 'ADB text replacement is not yet implemented safely; omit clearFirst or use a platform-specific clear action.');
+            await this.backend.typeText(targetId, action.text);
+          }
           else await this.backend.longPress(targetId, x, y, action.durationMs);
           break;
         }
