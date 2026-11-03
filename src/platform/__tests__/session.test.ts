@@ -36,6 +36,7 @@ describe('DriverSessionManager isolation', () => {
       .rejects.toMatchObject({ code: 'CONNECTION_FAILED' });
     release();
     await opening;
+    await manager.close('first');
   });
 
   it('reserves a physical target across separate engine session managers', async () => {
