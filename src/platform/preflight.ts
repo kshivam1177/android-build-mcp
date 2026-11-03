@@ -78,6 +78,7 @@ export async function inspectPlatformReadiness(
         } else {
           await checkCommand(platform, 'flutter-ios-xcode', 'xcodebuild', ['-version'], 'Install Xcode and select the active developer directory.');
           await checkCommand(platform, 'flutter-ios-appium', 'appium', ['--version'], 'Install Appium 2 and the XCUITest driver.');
+          await checkCommand(platform, 'flutter-ios-simulator-runtime', 'xcrun', ['simctl', 'list', 'devices', '--json'], 'Install an iOS Simulator runtime in Xcode Settings > Platforms.');
         }
       }
     } else if (platform === 'ios') {
@@ -87,6 +88,7 @@ export async function inspectPlatformReadiness(
         await checkCommand(platform, 'ios-xcode', 'xcodebuild', ['-version'], 'Install Xcode and select the active developer directory.');
         await checkCommand(platform, 'ios-appium', 'appium', ['--version'], 'Install Appium 2 and the XCUITest driver.');
         await checkCommand(platform, 'ios-xcuitest-driver', 'appium', ['driver', 'list', '--installed'], 'Install the Appium XCUITest driver with appium driver install xcuitest.');
+        await checkCommand(platform, 'ios-simulator-runtime', 'xcrun', ['simctl', 'list', 'devices', '--json'], 'Install an iOS Simulator runtime in Xcode Settings > Platforms.');
       }
     } else if (platform === 'web') {
       await checkCommand(platform, 'agent-browser-version', process.env.AGENT_BROWSER_PATH || 'agent-browser', ['--version'], 'Install Agent Browser and ensure its CLI is available on PATH or set AGENT_BROWSER_PATH.');
