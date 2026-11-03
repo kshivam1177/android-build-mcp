@@ -7,6 +7,7 @@ export interface RunCheckpoint {
   version: 1;
   runId: string;
   testId: string;
+  definitionHash: string;
   startedAt: string;
   updatedAt: string;
   status: 'running' | 'completed' | 'cancelled';
