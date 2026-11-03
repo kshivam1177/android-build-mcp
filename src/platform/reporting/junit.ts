@@ -39,5 +39,5 @@ export function toJunitXml(result: AutomationRunResult): string {
     '<property name="retriedSteps" value="' + result.summary.retriedSteps + '"/>' +
     '<property name="totalAttempts" value="' + result.summary.totalAttempts + '"/>' +
     '</properties>';
-  return '<?xml version="1.0" encoding="UTF-8"?>\\n<testsuite name="' + escapeXml(result.testId) + '" tests="' + cases.length + '" failures="' + failures + '" skipped="' + skipped + '" time="' + seconds + '">' + suiteProperties + body + '</testsuite>\\n';
+  return '<?xml version="1.0" encoding="UTF-8"?>\n<testsuite name="' + escapeXml(result.testId) + '" tests="' + cases.length + '" failures="' + failures + '" skipped="' + skipped + '" time="' + seconds + '">' + suiteProperties + body + '</testsuite>\n';
 }
