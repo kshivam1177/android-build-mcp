@@ -69,7 +69,7 @@ export class FileDeviceFleet {
   }
 
   async register(input: Omit<FleetTarget, 'updatedAt'>): Promise<FleetTarget> {
-    const target = targetSchema.parse({ ...input, updatedAt: new Date().toISOString() });
+    const target: FleetTarget = targetSchema.parse({ ...input, updatedAt: new Date().toISOString() });
     return serialized(this.registryPath, async () => {
       const registry = await readJson(this.registryPath, registrySchema, { version: 1, targets: [] });
       const existing = registry.targets.findIndex((item) => item.id === target.id);
