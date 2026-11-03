@@ -7,3 +7,4 @@ export * from './android/adbDriver.js';
 export * from './web/agentBrowserDriver.js';
 export * from './ios/appiumXCUITestDriver.js';
 export * from './flutter/semanticsDriver.js';
+export * from './drivers.js';
