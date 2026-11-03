@@ -109,9 +109,9 @@ export class AndroidAdbDriver implements PlatformDriver {
           break;
         }
         case 'hideKeyboard': {
-          const ime = await runAdbShell(targetId, ['dumpsys', 'input_method'], { timeoutMs: 5000 });
+          const ime = await runAdbShell(targetId, ['dumpsys', 'input_method'], { timeoutMs: 5000, signal });
           const keyboardVisible = /\bmInputShown=true\b|\bmIsInputViewShown=true\b|\bmShowRequested=true\b/i.test(ime.stdout);
-          if (keyboardVisible) await this.backend.keyEvent(targetId, 'KEYCODE_BACK');
+          if (keyboardVisible) await this.backend.keyEvent(targetId, 'KEYCODE_BACK', signal);
           else dispatched = false;
           break;
         }
@@ -119,14 +119,14 @@ export class AndroidAdbDriver implements PlatformDriver {
           const appId = action.appId ?? this.appId;
           if (!appId) throw new AutomationError('INVALID_SPEC', 'launchApp requires an appId in the action or target configuration.');
           validateAppIdentifier(appId);
-          await runAdbShell(targetId, ['monkey', '-p', appId, '-c', 'android.intent.category.LAUNCHER', '1'], { timeoutMs: 15000 });
+          await runAdbShell(targetId, ['monkey', '-p', appId, '-c', 'android.intent.category.LAUNCHER', '1'], { timeoutMs: 15000, signal });
           break;
         }
         case 'terminateApp': {
           const appId = action.appId ?? this.appId;
           if (!appId) throw new AutomationError('INVALID_SPEC', 'terminateApp requires an appId in the action or target configuration.');
           validateAppIdentifier(appId);
-          await runAdbShell(targetId, ['am', 'force-stop', appId], { timeoutMs: 10000 });
+          await runAdbShell(targetId, ['am', 'force-stop', appId], { timeoutMs: 10000, signal });
           break;
         }
         case 'navigate': throw new AutomationError('UNSUPPORTED_CAPABILITY', 'Native Android driver does not support URL navigation.');
