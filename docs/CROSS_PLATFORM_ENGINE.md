@@ -18,7 +18,7 @@ enabledWorkflows:
 
 ## Test definition
 
-See [login-smoke.json](../examples/cross-platform/login-smoke.json) for a shared journey example. Runtime credentials should be passed through the \`variables\` input, not committed into the JSON file.
+See [login-smoke.json](../examples/cross-platform/login-smoke.json) for a shared journey example and [android-lifecycle.json](../examples/cross-platform/android-lifecycle.json) for Android app lifecycle/keyboard operations. Runtime credentials should be passed through the \`variables\` input, not committed into the JSON file.
 
 Assertions are first-class steps:
 
