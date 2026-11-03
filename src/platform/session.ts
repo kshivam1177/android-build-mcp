@@ -1,11 +1,15 @@
 import { randomUUID } from 'node:crypto';
 import { AutomationError, type DriverConfig, type DriverSession, type PlatformDriver, type PlatformKind } from './contracts.js';
 
+const driverLeases = new WeakMap<PlatformDriver, symbol>();
+const targetLeases = new Map<string, symbol>();
+
 export interface ManagedSession {
   readonly session: DriverSession;
   readonly driver: PlatformDriver;
   readonly config: DriverConfig;
   readonly targetKey: string;
+  readonly leaseToken: symbol;
 }
 
 /**
@@ -14,9 +18,6 @@ export interface ManagedSession {
  */
 export class DriverSessionManager {
   private readonly sessions = new Map<string, ManagedSession>();
-  private readonly connecting = new Set<string>();
-  private readonly driverOwners = new WeakMap<PlatformDriver, string>();
-  private readonly activeTargets = new Map<string, PlatformDriver>();
 
   async open(driver: PlatformDriver, config: DriverConfig, signal?: AbortSignal): Promise<ManagedSession> {
     if (driver.platform !== config.platform) {
@@ -25,16 +26,16 @@ export class DriverSessionManager {
       });
     }
     const reservation = randomUUID();
-    if (this.driverOwners.has(driver)) {
+    if (driverLeases.has(driver)) {
       throw new AutomationError('CONNECTION_FAILED', 'This driver instance is already reserved by another session. Use a separate driver instance for each concurrent run.', { platform: config.platform });
     }
-    if (this.connecting.has(config.targetId ?? reservation) || this.activeTargets.has(config.targetId ?? reservation)) {
+    const targetKey = config.platform + ':' + (config.targetId ?? reservation);
+    if (targetLeases.has(targetKey)) {
       throw new AutomationError('CONNECTION_FAILED', 'A connection is already being established for this target.');
     }
-    const targetKey = config.targetId ?? reservation;
-    this.connecting.add(targetKey);
-    this.driverOwners.set(driver, targetKey);
-    this.activeTargets.set(targetKey, driver);
+    const leaseToken = Symbol(targetKey);
+    driverLeases.set(driver, leaseToken);
+    targetLeases.set(targetKey, leaseToken);
     let connected = false;
     try {
       if (signal?.aborted) throw new AutomationError('CANCELLED', 'Connection was cancelled.');
@@ -44,19 +45,17 @@ export class DriverSessionManager {
         await driver.disconnect();
         throw new AutomationError('CANCELLED', 'Connection was cancelled after the driver connected.');
       }
-      const managed = { session, driver, config, targetKey };
+      const managed = { session, driver, config, targetKey, leaseToken };
       this.sessions.set(session.id, managed);
       return managed;
     } catch (error) {
       if (!connected) {
         try { await driver.disconnect(); } catch { /* Preserve connection failure; cleanup is best-effort. */ }
       }
-      this.driverOwners.delete(driver);
-      this.activeTargets.delete(targetKey);
+      if (driverLeases.get(driver) === leaseToken) driverLeases.delete(driver);
+      if (targetLeases.get(targetKey) === leaseToken) targetLeases.delete(targetKey);
       throw error instanceof AutomationError ? error
         : new AutomationError('CONNECTION_FAILED', 'Could not establish platform session.', { platform: config.platform }, { cause: error });
-    } finally {
-      this.connecting.delete(targetKey);
     }
   }
 
@@ -75,8 +74,8 @@ export class DriverSessionManager {
     this.sessions.delete(sessionId);
     try { await managed.driver.disconnect(); }
     finally {
-      this.driverOwners.delete(managed.driver);
-      if (this.activeTargets.get(managed.targetKey) === managed.driver) this.activeTargets.delete(managed.targetKey);
+      if (driverLeases.get(managed.driver) === managed.leaseToken) driverLeases.delete(managed.driver);
+      if (targetLeases.get(managed.targetKey) === managed.leaseToken) targetLeases.delete(managed.targetKey);
     }
   }
 
