@@ -80,7 +80,10 @@ export function register(server: McpServer) {
       '- Test: ' + result.testId,
       '- Run: ' + result.runId,
       '- Result: ' + (result.success ? 'PASSED' : result.timedOut ? 'TIMED OUT' : result.cancelled ? 'CANCELLED' : 'FAILED'),
-      '- Duration: ' + result.durationMs + ' ms', '',
+      '- Duration: ' + result.durationMs + ' ms',
+      '- Platforms: ' + result.summary.passedPlatforms + '/' + result.summary.totalPlatforms + ' passed',
+      '- Steps: ' + result.summary.totalSteps + ' total; ' + result.summary.failedSteps + ' failed; ' + result.summary.retriedSteps + ' retried',
+      '- Attempts: ' + result.summary.totalAttempts, '',
       '## Platform results', ''
     ];
     for (const platform of reportResult.platforms) {
@@ -98,6 +101,7 @@ export function register(server: McpServer) {
     await fs.writeFile(junitPath, redactSensitiveText(toJunitXml(result), secrets), 'utf8');
     const summary = {
       success: result.success, cancelled: result.cancelled, timedOut: result.timedOut, testId: result.testId, runId: result.runId,
+      summary: result.summary,
       platforms: reportResult.platforms.map((platform) => ({ platform: platform.platform, success: platform.success, durationMs: platform.durationMs, error: platform.error, evidence: platform.evidence ? true : false })),
       reportDirectory, jsonReport: jsonPath, markdownReport: markdownPath, junitReport: junitPath
     };
