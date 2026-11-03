@@ -118,7 +118,8 @@ export async function validateEvidenceManifest(reportDirectory: string): Promise
       continue;
     }
     try {
-      await assertNoSymlinkPath(reportDirectory, artifact.path);
+      try { await assertNoSymlinkPath(reportDirectory, artifact.path); }
+      catch { unsafe.push(artifact.path); continue; }
       const digest = await hashFile(absolute);
       if (digest.sizeBytes !== artifact.sizeBytes || digest.sha256 !== artifact.sha256) modified.push(artifact.path);
     } catch (error) {
@@ -126,7 +127,9 @@ export async function validateEvidenceManifest(reportDirectory: string): Promise
       else throw error;
     }
   }
-  const actual = await collectFiles(reportDirectory);
+  let actual: string[] = [];
+  try { actual = await collectFiles(reportDirectory); }
+  catch (error) { unsafe.push(error instanceof Error ? error.message : String(error)); }
   for (const file of actual) if (!listed.has(file)) modified.push(file);
   return { valid: missing.length === 0 && modified.length === 0 && unsafe.length === 0, runId: manifest.runId, checked: manifest.artifacts.length, missing, modified: [...new Set(modified)], unsafe };
 }
