@@ -38,6 +38,19 @@ describe('DriverSessionManager isolation', () => {
     await opening;
   });
 
+  it('reserves a physical target across separate engine session managers', async () => {
+    const firstManager = new DriverSessionManager();
+    const secondManager = new DriverSessionManager();
+    const firstDriver = driver();
+    const secondDriver = driver();
+    await firstManager.open(firstDriver, { platform: 'web', targetId: 'shared-target' });
+    await expect(secondManager.open(secondDriver, { platform: 'web', targetId: 'shared-target' }))
+      .rejects.toMatchObject({ code: 'CONNECTION_FAILED' });
+    await firstManager.close('session-shared-target');
+    await expect(secondManager.open(secondDriver, { platform: 'web', targetId: 'shared-target' })).resolves.toBeDefined();
+    await secondManager.close('session-shared-target');
+  });
+
   it('disconnects after a driver connection fails partway through', async () => {
     const manager = new DriverSessionManager();
     const broken = driver();
