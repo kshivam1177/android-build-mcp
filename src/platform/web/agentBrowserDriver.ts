@@ -34,7 +34,7 @@ export class AgentBrowserDriver implements PlatformDriver {
   async capabilities(): Promise<PlatformCapabilities> {
     return { platform: 'web', snapshots: true, accessibilityTree: true, screenshots: true, gestures: true,
       appLifecycle: false, browserNavigation: true, nativeDialogs: false,
-      supportedActions: ['tap', 'type', 'longPress', 'swipe', 'back', 'key', 'navigate', 'wait'] };
+      supportedActions: ['tap', 'type', 'swipe', 'back', 'key', 'navigate', 'wait'] };
   }
 
   async snapshot(signal?: AbortSignal): Promise<PlatformSnapshot> {
