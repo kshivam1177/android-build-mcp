@@ -13,6 +13,9 @@ describe('UI state classifier', () => {
   it('classifies authentication screens', () => {
     expect(classifyUiState(snap('Enter password to sign in')).state).toBe('authentication');
   });
+  it('classifies native permission prompts without approving them', () => {
+    expect(classifyUiState(snap('Allow this app to access your location while using the app')).state).toBe('permission');
+  });
   it('keeps unknown screens as unexpected', () => {
     expect(classifyUiState(snap('Welcome')).state).toBe('unexpected');
   });
