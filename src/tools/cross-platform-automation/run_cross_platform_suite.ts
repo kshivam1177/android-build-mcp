@@ -99,15 +99,32 @@ export function register(server: McpServer) {
           checkpointStore: new FileRunCheckpointStore(checkpointPath)
         });
         junitSuites.push(toJunitXml(result).replace(/^<\?xml[^>]*>\s*/, ''));
+        const platformResults = [];
+        for (const p of result.platforms) {
+          let screenshotPath: string | undefined;
+          let snapshotPath: string | undefined;
+          if (p.evidence?.screenshot) {
+            screenshotPath = path.join(reportDirectory, 'evidence-' + item.definition.id + '-' + p.platform + '.png');
+            await fs.writeFile(screenshotPath, Buffer.from(p.evidence.screenshot.base64, 'base64'));
+          }
+          if (p.evidence?.snapshot) {
+            snapshotPath = path.join(reportDirectory, 'snapshot-' + item.definition.id + '-' + p.platform + '.json');
+            await fs.writeFile(snapshotPath, JSON.stringify(p.evidence.snapshot, null, 2), 'utf8');
+          }
+          platformResults.push({
+            platform: p.platform, status: p.status ?? (p.success ? 'passed' : 'failed'),
+            success: p.success, durationMs: p.durationMs, steps: p.steps, error: p.error,
+            evidence: p.evidence ? {
+              capturedAt: p.evidence.capturedAt,
+              ...(screenshotPath ? { screenshotPath: path.relative(root, screenshotPath).split(path.sep).join('/') } : {}),
+              ...(snapshotPath ? { snapshotPath: path.relative(root, snapshotPath).split(path.sep).join('/') } : {})
+            } : undefined
+          });
+        }
         outcomes.push({
           id: item.definition.id, file: item.file, name: item.definition.name,
           success: result.success, cancelled: result.cancelled, timedOut: result.timedOut,
-          durationMs: result.durationMs, summary: result.summary,
-          platforms: result.platforms.map((p) => ({
-            platform: p.platform, status: p.status ?? (p.success ? 'passed' : 'failed'),
-            success: p.success, durationMs: p.durationMs, steps: p.steps, error: p.error,
-            evidence: p.evidence ? { capturedAt: p.evidence.capturedAt, screenshot: Boolean(p.evidence.screenshot), snapshot: Boolean(p.evidence.snapshot) } : undefined
-          }))
+          durationMs: result.durationMs, summary: result.summary, platforms: platformResults
         });
         if (!result.success && args.stopOnFailure) break;
       } catch (error) {
@@ -127,7 +144,7 @@ export function register(server: McpServer) {
     await Promise.all([
       fs.writeFile(jsonPath, redactSensitiveText(JSON.stringify(report, null, 2), secrets), 'utf8'),
       fs.writeFile(markdownPath, redactSensitiveText(lines.join('\n'), secrets), 'utf8'),
-      fs.writeFile(junitPath, '<?xml version="1.0" encoding="UTF-8"?>\n<testsuites>\n' + junitSuites.join('\n') + '\n</testsuites>\n', 'utf8')
+      fs.writeFile(junitPath, redactSensitiveText('<?xml version="1.0" encoding="UTF-8"?>\n<testsuites>\n' + junitSuites.join('\n') + '\n</testsuites>\n', secrets), 'utf8')
     ]);
     const response = { runId, gate, selectedCount: selected.length, executedCount: outcomes.length, reportDirectory, jsonReport: jsonPath, markdownReport: markdownPath, junitReport: junitPath, outcomes: outcomes.map(({ id, name, success, durationMs, error }) => ({ id, name, success, durationMs, error })) };
     return textResult(JSON.stringify(response, null, 2), response);
