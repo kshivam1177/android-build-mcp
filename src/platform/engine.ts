@@ -12,7 +12,11 @@ export interface PlatformRunResult {
   error?: string;
   evidence?: { capturedAt: string; screenshot?: { mimeType: string; base64: string }; snapshot?: import('./contracts.js').PlatformSnapshot };
 }
-export interface AutomationRunResult { runId: string; testId: string; success: boolean; cancelled: boolean; timedOut: boolean; startedAt: string; durationMs: number; platforms: PlatformRunResult[]; }
+export interface AutomationRunResult {
+  runId: string; testId: string; success: boolean; cancelled: boolean; timedOut: boolean;
+  startedAt: string; durationMs: number; platforms: PlatformRunResult[];
+  summary: { totalPlatforms: number; completedPlatforms: number; passedPlatforms: number; failedPlatforms: number; totalSteps: number; failedSteps: number; retriedSteps: number; totalAttempts: number };
+}
 export interface AutomationEngineOptions {
   drivers: Partial<Record<PlatformKind, PlatformDriver>>;
   sessions?: DriverSessionManager;
@@ -46,7 +50,6 @@ export class AutomationEngine {
       timedOut = true;
       controller.abort();
     }, options.timeoutMs);
-    timeout?.unref?.();
     try {
       const result = await this.execute(definition, { ...options, signal: controller.signal });
       return { ...result, cancelled: controller.signal.aborted, timedOut };
@@ -125,11 +128,22 @@ export class AutomationEngine {
       const result = completed.get(platform);
       return result ? [result] : [];
     });
+    const allSteps = platforms.flatMap((platform) => platform.steps);
+    const summary = {
+      totalPlatforms: definition.platforms.length,
+      completedPlatforms: platforms.length,
+      passedPlatforms: platforms.filter((platform) => platform.success).length,
+      failedPlatforms: platforms.filter((platform) => !platform.success).length,
+      totalSteps: allSteps.length,
+      failedSteps: allSteps.filter((step) => step.status === 'failed').length,
+      retriedSteps: allSteps.filter((step) => (step.attempts ?? 1) > 1).length,
+      totalAttempts: allSteps.reduce((total, step) => total + (step.attempts ?? 1), 0)
+    };
     return {
       runId, testId: definition.id, startedAt, durationMs: Date.now() - started,
       success: !options.signal?.aborted && platforms.length === definition.platforms.length && platforms.every((result) => result.success),
       cancelled: options.signal?.aborted ?? false, timedOut: false,
-      platforms
+      platforms, summary
     };
   }
   private async runPlatform(runId: string, definition: AutomationTestDefinition, platform: PlatformKind, variables: Record<string, string | number | boolean | undefined>, signal?: AbortSignal): Promise<PlatformRunResult> {
