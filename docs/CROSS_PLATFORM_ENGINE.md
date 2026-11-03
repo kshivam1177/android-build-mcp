@@ -54,7 +54,7 @@ Supported assertion kinds: \`exists\`, \`visible\`, \`enabled\`, \`textEquals\`,
 
 ## Keyboard, app lifecycle and native permission prompts
 
-The shared test schema supports `hideKeyboard`, `launchApp`, and `terminateApp` steps. Android uses ADB input/Activity Manager commands; iOS uses Appium XCUITest device/app commands. App IDs can be supplied in the target configuration or on an individual lifecycle step. Flutter delegates these operations to its configured Android or iOS OS adapter. Web does not advertise native keyboard/app lifecycle support.
+The shared test schema supports `hideKeyboard`, `launchApp`, and `terminateApp` steps. The `manage_ios_simulator` tool lists available simulators and can boot or shut down a selected UDID; it never erases simulator data. Android uses ADB input/Activity Manager commands; iOS uses Appium XCUITest device/app commands. App IDs can be supplied in the target configuration or on an individual lifecycle step. Flutter delegates these operations to its configured Android or iOS OS adapter. Web does not advertise native keyboard/app lifecycle support.
 
 Native permission prompts are surfaced as the `permission` UI state so the agent can recognize them. The framework does not automatically grant or deny permissions; a test must explicitly target a visible permission-dialog control when that decision is intended.
 
