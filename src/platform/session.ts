@@ -29,9 +29,9 @@ export class DriverSessionManager {
     if (driverLeases.has(driver)) {
       throw new AutomationError('CONNECTION_FAILED', 'This driver instance is already reserved by another session. Use a separate driver instance for each concurrent run.', { platform: config.platform });
     }
-    const configuredTarget = config.targetId ?? (config.platform === 'ios'
-      ? String(config.metadata?.udid ?? config.metadata?.deviceName ?? 'default-simulator')
-      : undefined);
+    const configuredTarget = config.platform === 'ios'
+      ? String(config.metadata?.udid ?? config.targetId ?? config.metadata?.deviceName ?? 'default-simulator')
+      : config.targetId;
     const targetKey = config.platform + ':' + (configuredTarget ?? reservation);
     if (targetLeases.has(targetKey)) {
       throw new AutomationError('CONNECTION_FAILED', 'A connection is already being established for this target.');
