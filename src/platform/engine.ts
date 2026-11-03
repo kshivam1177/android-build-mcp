@@ -39,9 +39,14 @@ export class AutomationEngine {
         if (signal?.aborted) throw new AutomationError('CANCELLED', 'Test run was cancelled.');
         const stepStarted = Date.now(); this.options.onStep?.({ runId, platform, stepId: step.id, status: 'started' });
         try {
-          const action = toPlatformAction(step, variables);
-          if (!capabilities.supportedActions.includes(action.type)) throw new AutomationError('UNSUPPORTED_CAPABILITY', `Platform ${platform} does not support ${action.type}.`, { platform, action: action.type });
-          await driver.perform(action, signal); steps.push({ id: step.id, type: step.type, status: 'passed', durationMs: Date.now() - stepStarted });
+          if (step.type === 'waitFor') {
+            await driver.waitFor(step.condition, step.timeoutMs, signal);
+          } else {
+            const action = toPlatformAction(step, variables);
+            if (!capabilities.supportedActions.includes(action.type)) throw new AutomationError('UNSUPPORTED_CAPABILITY', `Platform ${platform} does not support ${action.type}.`, { platform, action: action.type });
+            await driver.perform(action, signal);
+          }
+          steps.push({ id: step.id, type: step.type, status: 'passed', durationMs: Date.now() - stepStarted });
           this.options.onStep?.({ runId, platform, stepId: step.id, status: 'passed' });
         } catch (error) {
           const message = error instanceof Error ? error.message : String(error);
@@ -64,6 +69,7 @@ function toPlatformAction(step: AutomationTestStep, variables: Record<string, st
     case 'back': return { type: 'back' };
     case 'navigate': return { type: 'navigate', url: step.url };
     case 'wait': return { type: 'wait', ...(step.timeoutMs !== undefined ? { timeoutMs: step.timeoutMs } : {}) };
+    case 'waitFor': throw new AutomationError('INVALID_SPEC', 'waitFor is handled by the condition engine.');
   }
 }
 function interpolate(value: string, variables: Record<string, string | number | boolean | undefined>): string {
