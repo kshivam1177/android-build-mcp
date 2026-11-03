@@ -1,4 +1,4 @@
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { AutomationError, type DriverConfig, type PlatformAction, type PlatformDriver, type PlatformKind } from './contracts.js';
 import { evaluateSnapshotAssertion } from './assertions.js';
 import { DriverSessionManager } from './session.js';
@@ -36,11 +36,12 @@ export class AutomationEngine {
   } = {}): Promise<AutomationRunResult> {
     const started = Date.now();
     const variables = { ...definition.variables, ...options.variables };
+    const definitionHash = createHash('sha256').update(JSON.stringify({ definition, variables })).digest('hex');
     const store = options.checkpointStore;
     let checkpoint: RunCheckpoint | undefined = options.resume && store ? await store.load() : undefined;
 
-    if (checkpoint && checkpoint.testId !== definition.id) {
-      throw new AutomationError('INVALID_SPEC', 'Checkpoint belongs to a different test definition.', {
+    if (checkpoint && (checkpoint.testId !== definition.id || checkpoint.definitionHash !== definitionHash)) {
+      throw new AutomationError('INVALID_SPEC', 'Checkpoint does not match this test definition or its runtime variables.', {
         expectedTestId: definition.id, checkpointTestId: checkpoint.testId
       });
     }
@@ -53,7 +54,7 @@ export class AutomationEngine {
     const startedAt = checkpoint?.startedAt ?? new Date().toISOString();
     const runId = checkpoint?.runId ?? randomUUID();
     checkpoint ??= {
-      version: 1, runId, testId: definition.id, startedAt, updatedAt: startedAt,
+      version: 1, runId, testId: definition.id, definitionHash, startedAt, updatedAt: startedAt,
       status: 'running', activePlatforms: [], completedPlatforms: []
     };
     checkpoint.status = 'running';
