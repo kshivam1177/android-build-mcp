@@ -210,3 +210,33 @@ describe('AutomationEngine retry boundaries', () => {
     expect(result.platforms[0]?.steps[0]?.attempts).toBe(1);
   });
 });
+
+
+describe('AutomationEngine run timeout', () => {
+  it('cancels active driver operations when the overall run timeout expires', async () => {
+    const android = fakeDriver('android');
+    vi.mocked(android.perform).mockImplementationOnce((_action, signal) => new Promise((_resolve, reject) => {
+      const abort = () => reject(new AutomationError('CANCELLED', 'operation aborted'));
+      signal?.addEventListener('abort', abort, { once: true });
+    }));
+    const definition = parseAutomationTest({
+      schemaVersion: '1.0', id: 'run-timeout', name: 'Run timeout', platforms: ['android'],
+      steps: [{ id: 'tap', type: 'tap', selector: { strategy: 'text', value: 'Continue' } }]
+    });
+    const result = await new AutomationEngine({ drivers: { android } }).run(definition, { timeoutMs: 25 });
+    expect(result.success).toBe(false);
+    expect(result.cancelled).toBe(true);
+    expect(result.timedOut).toBe(true);
+    expect(android.disconnect).toHaveBeenCalledOnce();
+  });
+
+  it('rejects invalid overall run timeout values', async () => {
+    const android = fakeDriver('android');
+    const definition = parseAutomationTest({
+      schemaVersion: '1.0', id: 'bad-timeout', name: 'Bad timeout', platforms: ['android'],
+      steps: [{ id: 'wait', type: 'wait', timeoutMs: 1 }]
+    });
+    await expect(new AutomationEngine({ drivers: { android } }).run(definition, { timeoutMs: 0 }))
+      .rejects.toMatchObject({ code: 'INVALID_SPEC' });
+  });
+});
