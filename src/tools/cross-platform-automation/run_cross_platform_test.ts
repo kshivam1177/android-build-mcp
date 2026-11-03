@@ -25,12 +25,13 @@ export function register(server: McpServer) {
       projectPath: z.string().optional().describe('Project root for report output; defaults to the current working directory.'),
       variables: z.record(z.string(), z.union([z.string(), z.number(), z.boolean()])).optional().describe('Runtime variables. Keep credentials out of the test definition and report.'),
       maxConcurrency: z.number().int().min(1).max(4).optional().describe('Maximum independent platform targets to execute concurrently. Defaults to 2.'),
+      runTimeoutMs: z.number().int().min(1000).max(3600000).optional().describe('Optional overall run timeout in milliseconds; active drivers receive cancellation when it expires.'),
       checkpointPath: z.string().optional().describe('Optional project-relative JSON checkpoint path. Reuse the same path with resume=true to continue a run.'),
       resume: z.boolean().optional().default(false).describe('Resume from completed platform checkpoints. Interrupted platforms are not replayed unless explicitly allowed.'),
       restartInterruptedPlatforms: z.boolean().optional().default(false).describe('Explicitly restart platforms that were active when the previous process stopped; may replay non-idempotent actions.')
     },
     annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: false, openWorldHint: true }
-  }, withErrorHandling(async (args: { testDefinition: unknown; projectPath?: string; variables?: Record<string, string | number | boolean>; maxConcurrency?: number; checkpointPath?: string; resume?: boolean; restartInterruptedPlatforms?: boolean }) => {
+  }, withErrorHandling(async (args: { testDefinition: unknown; projectPath?: string; variables?: Record<string, string | number | boolean>; maxConcurrency?: number; runTimeoutMs?: number; checkpointPath?: string; resume?: boolean; restartInterruptedPlatforms?: boolean }) => {
     const definition = parseAutomationTest(args.testDefinition);
     const projectRoot = resolveProjectRoot(args.projectPath ?? process.cwd());
     const checkpointFile = args.checkpointPath ? path.resolve(projectRoot, args.checkpointPath) : undefined;
@@ -40,7 +41,7 @@ export function register(server: McpServer) {
     }
     if (args.resume && !checkpointFile) throw new Error('resume=true requires checkpointPath.');
     const result = await new AutomationEngine({ drivers: createPlatformDrivers(), maxConcurrency: args.maxConcurrency }).run(definition, {
-      variables: args.variables, maxConcurrency: args.maxConcurrency,
+      variables: args.variables, maxConcurrency: args.maxConcurrency, timeoutMs: args.runTimeoutMs,
       ...(checkpointFile ? { checkpointStore: new FileRunCheckpointStore(checkpointFile) } : {}),
       resume: args.resume, restartInterruptedPlatforms: args.restartInterruptedPlatforms
     });
@@ -78,7 +79,7 @@ export function register(server: McpServer) {
       '# Cross-platform test report', '',
       '- Test: ' + result.testId,
       '- Run: ' + result.runId,
-      '- Result: ' + (result.success ? 'PASSED' : 'FAILED'),
+      '- Result: ' + (result.success ? 'PASSED' : result.timedOut ? 'TIMED OUT' : result.cancelled ? 'CANCELLED' : 'FAILED'),
       '- Duration: ' + result.durationMs + ' ms', '',
       '## Platform results', ''
     ];
@@ -89,14 +90,14 @@ export function register(server: McpServer) {
       if (platform.evidence && 'screenshotPath' in platform.evidence && platform.evidence.screenshotPath) lines.push('- Screenshot evidence: ' + path.basename(String(platform.evidence.screenshotPath)));
       if (platform.evidence?.snapshot) lines.push('- Accessibility snapshot captured: ' + platform.evidence.capturedAt);
       for (const step of platform.steps) {
-        lines.push('- [' + step.status.toUpperCase() + '] ' + step.id + ' (' + step.durationMs + ' ms)' + (step.error ? ': ' + step.error : ''));
+        lines.push('- [' + step.status.toUpperCase() + '] ' + step.id + ' (' + step.durationMs + ' ms; attempts: ' + (step.attempts ?? 1) + ')' + (step.error ? ': ' + step.error : ''));
       }
       lines.push('');
     }
     await fs.writeFile(markdownPath, redactSensitiveText(lines.join('\n'), secrets), 'utf8');
     await fs.writeFile(junitPath, redactSensitiveText(toJunitXml(result), secrets), 'utf8');
     const summary = {
-      success: result.success, testId: result.testId, runId: result.runId,
+      success: result.success, cancelled: result.cancelled, timedOut: result.timedOut, testId: result.testId, runId: result.runId,
       platforms: reportResult.platforms.map((platform) => ({ platform: platform.platform, success: platform.success, durationMs: platform.durationMs, error: platform.error, evidence: platform.evidence ? true : false })),
       reportDirectory, jsonReport: jsonPath, markdownReport: markdownPath, junitReport: junitPath
     };
