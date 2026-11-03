@@ -229,6 +229,8 @@ describe('AutomationEngine run timeout', () => {
     expect(result.success).toBe(false);
     expect(result.cancelled).toBe(true);
     expect(result.timedOut).toBe(true);
+    expect(result.platforms[0]?.status).toBe('cancelled');
+    expect(result.summary.cancelledPlatforms).toBe(1);
     expect(android.disconnect).toHaveBeenCalledOnce();
   });
 
