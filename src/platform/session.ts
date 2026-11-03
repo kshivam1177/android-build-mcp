@@ -15,6 +15,7 @@ export class DriverSessionManager {
   private readonly sessions = new Map<string, ManagedSession>();
   private readonly connecting = new Set<string>();
   private readonly driverOwners = new WeakMap<PlatformDriver, string>();
+  private readonly activeTargets = new Map<string, PlatformDriver>();
 
   async open(driver: PlatformDriver, config: DriverConfig, signal?: AbortSignal): Promise<ManagedSession> {
     if (driver.platform !== config.platform) {
@@ -26,12 +27,13 @@ export class DriverSessionManager {
     if (this.driverOwners.has(driver)) {
       throw new AutomationError('CONNECTION_FAILED', 'This driver instance is already reserved by another session. Use a separate driver instance for each concurrent run.', { platform: config.platform });
     }
-    if (this.connecting.has(config.targetId ?? reservation)) {
+    if (this.connecting.has(config.targetId ?? reservation) || this.activeTargets.has(config.targetId ?? reservation)) {
       throw new AutomationError('CONNECTION_FAILED', 'A connection is already being established for this target.');
     }
     const targetKey = config.targetId ?? reservation;
     this.connecting.add(targetKey);
     this.driverOwners.set(driver, targetKey);
+    this.activeTargets.set(targetKey, driver);
     let connected = false;
     try {
       if (signal?.aborted) throw new AutomationError('CANCELLED', 'Connection was cancelled.');
@@ -49,6 +51,7 @@ export class DriverSessionManager {
         try { await driver.disconnect(); } catch { /* Preserve connection failure; cleanup is best-effort. */ }
       }
       this.driverOwners.delete(driver);
+      this.activeTargets.delete(targetKey);
       throw error instanceof AutomationError ? error
         : new AutomationError('CONNECTION_FAILED', 'Could not establish platform session.', { platform: config.platform }, { cause: error });
     } finally {
@@ -70,7 +73,11 @@ export class DriverSessionManager {
     if (!managed) return;
     this.sessions.delete(sessionId);
     try { await managed.driver.disconnect(); }
-    finally { this.driverOwners.delete(managed.driver); }
+    finally {
+      this.driverOwners.delete(managed.driver);
+      const targetKey = managed.config.targetId ?? managed.session.id;
+      if (this.activeTargets.get(targetKey) === managed.driver) this.activeTargets.delete(targetKey);
+    }
   }
 
   async closeAll(): Promise<void> {
