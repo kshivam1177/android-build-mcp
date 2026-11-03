@@ -11,7 +11,7 @@ on:
   workflow_dispatch:
     inputs:
       publish_npm:
-        description: Publish from the selected dev or master branch (dev uses the dev npm tag; master uses latest)
+        description: Publish the master branch to the npm latest tag
         type: boolean
         required: true
         default: true
@@ -44,7 +44,7 @@ jobs:
 
   publish-npm:
     name: Publish to npm
-    if: ${{ (github.event_name == 'push' || inputs.publish_npm) && (github.ref_name == 'master' || (github.event_name == 'workflow_dispatch' && github.ref_name == 'dev')) }}
+    if: ${{ (github.event_name == 'push' || inputs.publish_npm) && github.ref_name == 'master' }}
     runs-on: ubuntu-latest
     needs: verify-package
     environment: npm-publish
@@ -107,15 +107,11 @@ jobs:
             npm version "$NEXT_VERSION" --no-git-tag-version
           fi
           TARGET_BRANCH="$GITHUB_REF_NAME"
-          if [[ "$TARGET_BRANCH" != "master" && "$TARGET_BRANCH" != "dev" ]]; then
-            echo "Refusing to publish branch '$TARGET_BRANCH'. Select dev or master." >&2
+          if [[ "$TARGET_BRANCH" != "master" ]]; then
+            echo "Refusing to publish branch '$TARGET_BRANCH'. Only master is supported." >&2
             exit 1
           fi
-          if [[ "$TARGET_BRANCH" == "master" ]]; then
-            DIST_TAG="latest"
-          else
-            DIST_TAG="dev"
-          fi
+          DIST_TAG="latest"
           echo "version=$NEXT_VERSION" >> "$GITHUB_OUTPUT"
           echo "dist_tag=$DIST_TAG" >> "$GITHUB_OUTPUT"
           echo "target_branch=$TARGET_BRANCH" >> "$GITHUB_OUTPUT"
@@ -180,6 +176,6 @@ jobs:
             exit 0
           fi
           git commit -m "chore: record published npm version v${VERSION}"
-          # Never force-push and never push a dev build to master (or vice versa).
+          # Never force-push; release commits are recorded on master only.
           git push origin "HEAD:refs/heads/${TARGET_BRANCH}"
 

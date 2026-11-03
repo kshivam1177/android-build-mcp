@@ -19,7 +19,7 @@ export function toJunitXml(result: AutomationRunResult): string {
       name: platform.platform + ' platform setup',
       classname: result.testId,
       time: (platform.durationMs / 1000).toFixed(3),
-      status: platform.success ? 'passed' : 'failed',
+      status: platform.status === 'cancelled' ? 'skipped' : platform.success ? 'passed' : 'failed',
       message: platform.error ?? ''
     }];
   });
@@ -29,7 +29,18 @@ export function toJunitXml(result: AutomationRunResult): string {
   const body = cases.map((item) => {
     const failure = item.status === 'failed' ? '<failure message="' + escapeXml(item.message || 'Failed') + '">' + escapeXml(item.message) + '</failure>' : '';
     const skip = item.status === 'skipped' ? '<skipped message="' + escapeXml(item.message || 'Skipped') + '"/>' : '';
-    return '<testcase classname="' + escapeXml(item.classname) + '" name="' + escapeXml(item.name) + '" time="' + item.time + '">' + failure + skip + '</testcase>';
+    const source = result.platforms.flatMap((platform) => platform.steps.map((step) => ({ platform: platform.platform, id: step.id, attempts: step.attempts ?? 1 }))).find((step) => item.name === step.platform + ' / ' + step.id);
+    const properties = source ? '<properties><property name="attempts" value="' + source.attempts + '"/></properties>' : '';
+    return '<testcase classname="' + escapeXml(item.classname) + '" name="' + escapeXml(item.name) + '" time="' + item.time + '">' + properties + failure + skip + '</testcase>';
   }).join('');
-  return '<?xml version="1.0" encoding="UTF-8"?>\n<testsuite name="' + escapeXml(result.testId) + '" tests="' + cases.length + '" failures="' + failures + '" skipped="' + skipped + '" time="' + seconds + '">' + body + '</testsuite>\n';
+  const retriedSteps = result.summary?.retriedSteps ?? 0;
+  const totalAttempts = result.summary?.totalAttempts ?? cases.length;
+  const suiteProperties = '<properties>' +
+    '<property name="cancelled" value="' + String(result.cancelled ?? false) + '"/>' +
+    '<property name="timedOut" value="' + String(result.timedOut ?? false) + '"/>' +
+    '<property name="cancelledPlatforms" value="' + (result.summary?.cancelledPlatforms ?? 0) + '"/>' +
+    '<property name="retriedSteps" value="' + retriedSteps + '"/>' +
+    '<property name="totalAttempts" value="' + totalAttempts + '"/>' +
+    '</properties>';
+  return '<?xml version="1.0" encoding="UTF-8"?>\n<testsuite name="' + escapeXml(result.testId) + '" tests="' + cases.length + '" failures="' + failures + '" skipped="' + skipped + '" time="' + seconds + '">' + suiteProperties + body + '</testsuite>\n';
 }

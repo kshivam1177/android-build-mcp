@@ -42,7 +42,7 @@ describe('AndroidAdbDriver', () => {
     await driver.connect({ platform: 'android', targetId: 'emulator-5554' });
     const result = await driver.perform({ type: 'tap', selector: { strategy: 'resourceId', value: 'app:id/continue' } });
     expect(result.dispatched).toBe(true);
-    expect(mock.tap).toHaveBeenCalledWith('emulator-5554', 60, 45);
+    expect(mock.tap).toHaveBeenCalledWith('emulator-5554', 60, 45, undefined);
     await driver.disconnect();
   });
 
@@ -53,7 +53,7 @@ describe('AndroidAdbDriver', () => {
     vi.mocked(runAdbShell).mockResolvedValueOnce({ stdout: 'mInputShown=true', stderr: '', exitCode: 0, command: 'adb', durationMs: 1 });
     const result = await driver.perform({ type: 'hideKeyboard' });
     expect(result.dispatched).toBe(true);
-    expect(mock.keyEvent).toHaveBeenCalledWith('emulator-5554', 'KEYCODE_BACK');
+    expect(mock.keyEvent).toHaveBeenCalledWith('emulator-5554', 'KEYCODE_BACK', undefined);
     await driver.disconnect();
   });
 
@@ -71,9 +71,9 @@ describe('AndroidAdbDriver', () => {
     const driver = new AndroidAdbDriver(backend());
     await driver.connect({ platform: 'android', targetId: 'emulator-5554', appId: 'com.example.app' });
     await driver.perform({ type: 'terminateApp' });
-    expect(runAdbShell).toHaveBeenCalledWith('emulator-5554', ['am', 'force-stop', 'com.example.app'], { timeoutMs: 10000 });
+    expect(runAdbShell).toHaveBeenCalledWith('emulator-5554', ['am', 'force-stop', 'com.example.app'], { timeoutMs: 10000, signal: undefined });
     await driver.perform({ type: 'launchApp' });
-    expect(runAdbShell).toHaveBeenCalledWith('emulator-5554', ['monkey', '-p', 'com.example.app', '-c', 'android.intent.category.LAUNCHER', '1'], { timeoutMs: 15000 });
+    expect(runAdbShell).toHaveBeenCalledWith('emulator-5554', ['monkey', '-p', 'com.example.app', '-c', 'android.intent.category.LAUNCHER', '1'], { timeoutMs: 15000, signal: undefined });
     await driver.disconnect();
   });
 
@@ -85,6 +85,18 @@ describe('AndroidAdbDriver', () => {
     await expect(driver.perform({ type: 'launchApp', appId: 'com.example;bad' }))
       .rejects.toMatchObject({ code: 'INVALID_SPEC' });
     expect(runAdbShell).not.toHaveBeenCalled();
+    await driver.disconnect();
+  });
+
+  it('forwards cancellation signals to native backend calls', async () => {
+    const mock = backend();
+    const driver = new AndroidAdbDriver(mock);
+    const controller = new AbortController();
+    await driver.connect({ platform: 'android', targetId: 'emulator-5554' });
+    await driver.snapshot(controller.signal);
+    expect(mock.dumpHierarchy).toHaveBeenCalledWith('emulator-5554', controller.signal);
+    await driver.perform({ type: 'tap', selector: { strategy: 'resourceId', value: 'app:id/continue' } }, controller.signal);
+    expect(mock.tap).toHaveBeenCalledWith('emulator-5554', 60, 45, controller.signal);
     await driver.disconnect();
   });
 

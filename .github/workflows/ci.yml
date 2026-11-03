@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [dev, master]
+    branches: [master]
   pull_request:
-    branches: [dev, master]
+    branches: [master]
   workflow_dispatch:
 
 permissions:
@@ -16,15 +16,19 @@ concurrency:
 
 jobs:
   quality:
-    name: Build, type-check, lint and test
+    name: Quality (Node ${{ matrix.node-version }})
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: [18, 20, 22]
     steps:
       - name: Check out source
         uses: actions/checkout@v4
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: ${{ matrix.node-version }}
           cache: npm
       - name: Install dependencies
         run: npm ci
@@ -35,12 +39,42 @@ jobs:
       - name: Lint
         run: npm run lint
       - name: Unit tests
-        run: npm test
+        run: mkdir -p test-results && npm test -- --reporter=junit --outputFile=test-results/junit.xml
+      - name: Upload unit-test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-node-${{ matrix.node-version }}
+          path: test-results/junit.xml
+          if-no-files-found: warn
       - name: Verify CLI starts
         run: node build/cli/index.js --help
       - name: Verify tool metadata
         run: npm run docs:check
       - name: Verify operational scripts
-        run: node --check scripts/generate-tool-inventory.mjs && node --check scripts/smoke-published-package.mjs && node --check scripts/run-samsung-device-regression.mjs
+        run: node --check scripts/generate-tool-inventory.mjs && node --check scripts/smoke-published-package.mjs && node --check scripts/run-samsung-device-regression.mjs && node --check scripts/summarize-ci-matrix.mjs
       - name: Verify package contents
         run: npm pack --dry-run
+
+
+  aggregate:
+    name: Aggregate Node matrix reports
+    if: always()
+    needs: quality
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+      - name: Download matrix reports
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          pattern: test-results-node-*
+          path: test-results
+      - name: Publish consolidated test summary
+        run: node scripts/summarize-ci-matrix.mjs
+      - name: Enforce matrix success
+        if: needs.quality.result != 'success'
+        run: |
+          echo "One or more Node compatibility jobs failed."
+          exit 1

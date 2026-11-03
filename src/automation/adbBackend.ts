@@ -29,13 +29,14 @@ export const adbBackend: AutomationBackend = {
     return true;
   },
 
-  async dumpHierarchy(targetId: string): Promise<string> {
+  async dumpHierarchy(targetId: string, signal?: AbortSignal): Promise<string> {
     try {
-      await runAdbShell(targetId, ['uiautomator', 'dump', '--compressed', DUMP_PATH], { timeoutMs: 20_000 });
-    } catch {
-      await runAdbShell(targetId, ['uiautomator', 'dump', DUMP_PATH], { timeoutMs: 20_000 });
+      await runAdbShell(targetId, ['uiautomator', 'dump', '--compressed', DUMP_PATH], { timeoutMs: 20_000, signal });
+    } catch (error) {
+      if (signal?.aborted) throw error;
+      await runAdbShell(targetId, ['uiautomator', 'dump', DUMP_PATH], { timeoutMs: 20_000, signal });
     }
-    const result = await runAdbShell(targetId, ['cat', DUMP_PATH], { timeoutMs: 20_000 });
+    const result = await runAdbShell(targetId, ['cat', DUMP_PATH], { timeoutMs: 20_000, signal });
     if (!result.stdout.includes('<hierarchy')) {
       throw new AndroidBuildMcpError(
         'COMMAND_FAILED',
@@ -46,19 +47,19 @@ export const adbBackend: AutomationBackend = {
     return result.stdout;
   },
 
-  async tap(targetId: string, x: number, y: number): Promise<void> {
-    await runAdbShell(targetId, ['input', 'tap', String(Math.round(x)), String(Math.round(y))]);
+  async tap(targetId: string, x: number, y: number, signal?: AbortSignal): Promise<void> {
+    await runAdbShell(targetId, ['input', 'tap', String(Math.round(x)), String(Math.round(y))], { signal });
   },
 
-  async longPress(targetId: string, x: number, y: number, durationMs = 600): Promise<void> {
+  async longPress(targetId: string, x: number, y: number, durationMs = 600, signal?: AbortSignal): Promise<void> {
     // No dedicated "long press" input subcommand - a swipe with identical
     // start/end coordinates held for `durationMs` is the standard trick.
     const xi = String(Math.round(x));
     const yi = String(Math.round(y));
-    await runAdbShell(targetId, ['input', 'swipe', xi, yi, xi, yi, String(durationMs)]);
+    await runAdbShell(targetId, ['input', 'swipe', xi, yi, xi, yi, String(durationMs)], { signal });
   },
 
-  async swipe(targetId: string, startX: number, startY: number, endX: number, endY: number, durationMs = 300): Promise<void> {
+  async swipe(targetId: string, startX: number, startY: number, endX: number, endY: number, durationMs = 300, signal?: AbortSignal): Promise<void> {
     await runAdbShell(targetId, [
       'input',
       'swipe',
@@ -67,10 +68,10 @@ export const adbBackend: AutomationBackend = {
       String(Math.round(endX)),
       String(Math.round(endY)),
       String(durationMs),
-    ]);
+    ], { signal });
   },
 
-  async drag(targetId: string, startX: number, startY: number, endX: number, endY: number, durationMs = 800): Promise<void> {
+  async drag(targetId: string, startX: number, startY: number, endX: number, endY: number, durationMs = 800, signal?: AbortSignal): Promise<void> {
     await runAdbShell(targetId, [
       'input',
       'draganddrop',
@@ -79,20 +80,20 @@ export const adbBackend: AutomationBackend = {
       String(Math.round(endX)),
       String(Math.round(endY)),
       String(durationMs),
-    ]);
+    ], { signal });
   },
 
-  async typeText(targetId: string, text: string): Promise<void> {
-    await runAdbShell(targetId, ['input', 'text', escapeAdbInputText(text)]);
+  async typeText(targetId: string, text: string, signal?: AbortSignal): Promise<void> {
+    await runAdbShell(targetId, ['input', 'text', escapeAdbInputText(text)], { signal });
   },
 
-  async keyEvent(targetId: string, keyCode: string): Promise<void> {
-    await runAdbShell(targetId, ['input', 'keyevent', keyCode]);
+  async keyEvent(targetId: string, keyCode: string, signal?: AbortSignal): Promise<void> {
+    await runAdbShell(targetId, ['input', 'keyevent', keyCode], { signal });
   },
 
-  async screenshot(targetId: string): Promise<{ data: Buffer; mimeType: string }> {
+  async screenshot(targetId: string, signal?: AbortSignal): Promise<{ data: Buffer; mimeType: string }> {
     const result = await execCommandBinary(getAdbPath(), ['-s', targetId, 'exec-out', 'screencap', '-p'], {
-      timeoutMs: 20_000,
+      timeoutMs: 20_000, signal
     });
     if (result.exitCode !== 0 || result.stdout.length === 0) {
       throw new AndroidBuildMcpError('COMMAND_FAILED', 'screencap produced no image data.', {

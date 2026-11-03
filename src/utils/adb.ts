@@ -9,7 +9,7 @@ export function getAdbPath(): string {
   return loadConfig().paths.adbPath || 'adb';
 }
 
-export async function runAdb(args: string[], options: Pick<ExecOptions, 'timeoutMs' | 'cwd'> = {}) {
+export async function runAdb(args: string[], options: Pick<ExecOptions, 'timeoutMs' | 'cwd' | 'signal'> = {}) {
   try {
     return await execCommand(getAdbPath(), args, options);
   } catch (err) {
@@ -26,12 +26,12 @@ export async function runAdb(args: string[], options: Pick<ExecOptions, 'timeout
 export async function runAdbForTarget(
   targetId: string,
   args: string[],
-  options: Pick<ExecOptions, 'timeoutMs' | 'cwd'> = {}
+  options: Pick<ExecOptions, 'timeoutMs' | 'cwd' | 'signal'> = {}
 ) {
   return runAdb(['-s', targetId, ...args], options);
 }
 
-export async function runAdbShell(targetId: string, shellArgs: string[], options: Pick<ExecOptions, 'timeoutMs'> = {}) {
+export async function runAdbShell(targetId: string, shellArgs: string[], options: Pick<ExecOptions, 'timeoutMs' | 'signal'> = {}) {
   return runAdbForTarget(targetId, ['shell', ...shellArgs], options);
 }
 
