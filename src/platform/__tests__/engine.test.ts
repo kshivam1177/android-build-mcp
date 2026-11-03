@@ -161,9 +161,10 @@ describe('AutomationEngine checkpoint resume', () => {
 
   it('blocks resume when a platform was active at interruption', async () => {
     const android = fakeDriver('android');
+    let definitionHash = '';
     const store = {
       load: vi.fn(async () => ({
-        version: 1 as const, runId: 'interrupted-run', testId: 'interrupted', definitionHash: 'irrelevant',
+        version: 1 as const, runId: 'interrupted-run', testId: 'interrupted', definitionHash,
         startedAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
         status: 'running' as const, activePlatforms: ['android' as const], completedPlatforms: []
       })),
@@ -173,6 +174,7 @@ describe('AutomationEngine checkpoint resume', () => {
       schemaVersion: '1.0', id: 'interrupted', name: 'Interrupted test',
       platforms: ['android'], steps: [{ id: 'tap', type: 'tap', selector: { strategy: 'text', value: 'Pay' } }]
     });
+    definitionHash = createHash('sha256').update(JSON.stringify({ definition, variables: {} })).digest('hex');
     await expect(new AutomationEngine({ drivers: { android } }).run(definition, {
       checkpointStore: store, resume: true
     })).rejects.toThrow('blocked to avoid replaying');
