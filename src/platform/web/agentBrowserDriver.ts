@@ -22,11 +22,15 @@ export class AgentBrowserDriver implements PlatformDriver {
     this.sessionName = `amf-${randomUUID()}`;
     this.timeoutMs = config.commandTimeoutMs ?? 30000;
     try {
-      await this.run(['open']);
-      if (config.baseUrl) await this.run(['open', config.baseUrl]);
+      await this.run(['open'], signal);
+      if (config.baseUrl) await this.run(['open', config.baseUrl], signal);
       this.session = { id: randomUUID(), platform: 'web', targetId: this.sessionName, connectedAt: new Date().toISOString() };
       return this.session;
     } catch (error) {
+      try { await this.run(['close']); } catch { /* Best-effort cleanup after a partially-created browser session. */ }
+      this.session = undefined;
+      this.sessionName = '';
+      if (signal?.aborted) throw new AutomationError('CANCELLED', 'Browser connection was cancelled.', {}, { cause: error });
       throw new AutomationError('CONNECTION_FAILED', 'Agent Browser could not create a browser session. Check installation and browser runtime.', {}, { cause: error });
     }
   }
@@ -39,7 +43,7 @@ export class AgentBrowserDriver implements PlatformDriver {
 
   async snapshot(signal?: AbortSignal): Promise<PlatformSnapshot> {
     this.ensureConnected(signal);
-    const result = await this.run(['snapshot', '--json']);
+    const result = await this.run(['snapshot', '--json'], signal);
     let parsed: AgentBrowserSnapshot;
     try { parsed = JSON.parse(result.stdout) as AgentBrowserSnapshot; }
     catch (error) { throw new AutomationError('ACTION_FAILED', 'Agent Browser returned invalid snapshot JSON.', {}, { cause: error }); }
@@ -66,18 +70,18 @@ export class AgentBrowserDriver implements PlatformDriver {
     const startedAt = new Date().toISOString(); const started = Date.now();
     let target: ResolvedElement | null = null;
     switch (action.type) {
-      case 'navigate': await this.run(['open', action.url]); break;
-      case 'back': await this.run(['back']); break;
-      case 'key': await this.run(['press', action.key]); break;
+      case 'navigate': await this.run(['open', action.url], signal); break;
+      case 'back': await this.run(['back'], signal); break;
+      case 'key': await this.run(['press', action.key], signal); break;
       case 'wait': await this.delay(action.timeoutMs ?? 250, signal); break;
-      case 'swipe': await this.run(['scroll', action.direction]); break;
+      case 'swipe': await this.run(['scroll', action.direction], signal); break;
       case 'tap':
       case 'type':
       case 'longPress': {
         const fresh = await this.snapshot(signal);
         target = await this.resolve(action.selector, fresh);
-        if (action.type === 'tap') await this.run(['click', target.ref]);
-        else if (action.type === 'type') await this.run(['fill', target.ref, action.text]);
+        if (action.type === 'tap') await this.run(['click', target.ref], signal);
+        else if (action.type === 'type') await this.run(['fill', target.ref, action.text], signal);
         else throw new AutomationError('UNSUPPORTED_CAPABILITY', 'Agent Browser CLI adapter does not expose a portable long-press command.');
         break;
       }
@@ -90,7 +94,7 @@ export class AgentBrowserDriver implements PlatformDriver {
     while (Date.now() < deadline) {
       this.ensureConnected(signal);
       if (condition.kind === 'url') {
-        const result = await this.run(['get', 'url']);
+        const result = await this.run(['get', 'url'], signal);
         if ((condition.equals && result.stdout.trim() === condition.equals) ||
             (condition.contains && result.stdout.includes(condition.contains))) return this.snapshot(signal);
       } else {
@@ -116,7 +120,7 @@ export class AgentBrowserDriver implements PlatformDriver {
     const directory = await mkdtemp(path.join(os.tmpdir(), 'amf-browser-'));
     const file = path.join(directory, 'screenshot.png');
     try {
-      await this.run(['screenshot', file]);
+      await this.run(['screenshot', file], signal);
       const [data, snapshot] = await Promise.all([readFile(file), this.snapshot(signal)]);
       return { capturedAt: new Date().toISOString(), screenshot: { data, mimeType: 'image/png' }, snapshot };
     } finally { await rm(directory, { recursive: true, force: true }); }
@@ -127,8 +131,8 @@ export class AgentBrowserDriver implements PlatformDriver {
     try { await this.run(['close']); } finally { this.session = undefined; this.sessionName = ''; }
   }
 
-  private async run(args: string[]) {
-    const result = await execCommand(this.command, ['--session-name', this.sessionName, ...args], { timeoutMs: this.timeoutMs });
+  private async run(args: string[], signal?: AbortSignal) {
+    const result = await execCommand(this.command, ['--session-name', this.sessionName, ...args], { timeoutMs: this.timeoutMs, signal });
     if (result.exitCode !== 0) throw new AutomationError('ACTION_FAILED', 'Agent Browser command failed.', { command: args[0], stderr: result.stderr.slice(0, 2000) });
     return result;
   }
