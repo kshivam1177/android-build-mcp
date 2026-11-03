@@ -21,10 +21,12 @@ export async function findExpiredReports(reportsRoot: string, retentionDays: num
     if ((error as NodeJS.ErrnoException).code === 'ENOENT') return candidates;
     throw error;
   }
+  const projectRoot = await fs.realpath(path.resolve(reportsRoot, '..', '..'));
+  if (await fs.realpath(reportsRoot) !== path.join(projectRoot, '.androidmcp-framework', 'test-reports')) throw new Error('Refusing to inspect reports through a symlinked or external reports directory.');
   for (const dateName of dates) {
     if (!datePattern.test(dateName)) continue;
     const date = new Date(dateName + 'T00:00:00.000Z');
-    if (!Number.isFinite(date.getTime()) || date.getTime() >= cutoff) continue;
+    if (!Number.isFinite(date.getTime()) || date.toISOString().slice(0, 10) !== dateName || date.getTime() >= cutoff) continue;
     const dateDirectory = path.join(reportsRoot, dateName);
     const dateStat = await fs.lstat(dateDirectory);
     if (dateStat.isSymbolicLink() || !dateStat.isDirectory()) continue;
