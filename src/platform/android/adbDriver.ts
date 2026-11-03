@@ -18,10 +18,11 @@ export class AndroidAdbDriver implements PlatformDriver {
   async connect(config: DriverConfig, signal?: AbortSignal): Promise<DriverSession> {
     if (signal?.aborted) throw new AutomationError('CANCELLED', 'Connection cancelled.');
     if (!config.targetId) throw new AutomationError('INVALID_SPEC', 'Android requires an ADB targetId.');
+    const appId = config.appId ? validateAppIdentifier(config.appId) : undefined;
     try {
       if (!(await this.backend.isAvailable(config.targetId))) throw new Error('ADB backend unavailable.');
       this.targetId = config.targetId;
-      this.appId = config.appId ? validateAppIdentifier(config.appId) : undefined;
+      this.appId = appId;
       this.session = { id: randomUUID(), platform: 'android', targetId: config.targetId, connectedAt: new Date().toISOString() };
       return this.session;
     } catch (error) {
