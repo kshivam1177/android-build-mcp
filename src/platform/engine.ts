@@ -3,6 +3,7 @@ import { AutomationError, type DriverConfig, type PlatformAction, type PlatformD
 import { evaluateSnapshotAssertion } from './assertions.js';
 import { DriverSessionManager } from './session.js';
 import { runBounded } from './orchestration.js';
+import type { RunCheckpoint, RunCheckpointStore } from './checkpoint.js';
 import type { AutomationTestDefinition, AutomationTestStep } from './specification.js';
 
 export interface PlatformRunResult {
@@ -24,16 +25,80 @@ export interface AutomationEngineOptions {
 export class AutomationEngine {
   private readonly sessions: DriverSessionManager;
   constructor(private readonly options: AutomationEngineOptions) { this.sessions = options.sessions ?? new DriverSessionManager(); }
-  async run(definition: AutomationTestDefinition, options: { signal?: AbortSignal; variables?: Record<string, string | number | boolean>; maxConcurrency?: number } = {}): Promise<AutomationRunResult> {
-    const runId = randomUUID(); const startedAt = new Date().toISOString(); const started = Date.now();
+  async run(definition: AutomationTestDefinition, options: {
+    signal?: AbortSignal;
+    variables?: Record<string, string | number | boolean>;
+    maxConcurrency?: number;
+    checkpointStore?: RunCheckpointStore;
+    resume?: boolean;
+    /** Explicitly permits restarting platforms that were active when the prior process stopped. */
+    restartInterruptedPlatforms?: boolean;
+  } = {}): Promise<AutomationRunResult> {
+    const started = Date.now();
     const variables = { ...definition.variables, ...options.variables };
-    const platforms = await runBounded(
-      definition.platforms,
+    const store = options.checkpointStore;
+    let checkpoint: RunCheckpoint | undefined = options.resume && store ? await store.load() : undefined;
+
+    if (checkpoint && checkpoint.testId !== definition.id) {
+      throw new AutomationError('INVALID_SPEC', 'Checkpoint belongs to a different test definition.', {
+        expectedTestId: definition.id, checkpointTestId: checkpoint.testId
+      });
+    }
+    if (checkpoint?.activePlatforms.length && !options.restartInterruptedPlatforms) {
+      throw new AutomationError('INVALID_SPEC', 'The previous process stopped while platform runs were active. Resume was blocked to avoid replaying potentially non-idempotent actions. Set restartInterruptedPlatforms=true only after reviewing the previous run.', {
+        interruptedPlatforms: checkpoint.activePlatforms
+      });
+    }
+
+    const startedAt = checkpoint?.startedAt ?? new Date().toISOString();
+    const runId = checkpoint?.runId ?? randomUUID();
+    checkpoint ??= {
+      version: 1, runId, testId: definition.id, startedAt, updatedAt: startedAt,
+      status: 'running', activePlatforms: [], completedPlatforms: []
+    };
+    checkpoint.status = 'running';
+    checkpoint.activePlatforms = [];
+    const completed = new Map(checkpoint.completedPlatforms.map((result) => [result.platform, result]));
+    const pending = definition.platforms.filter((platform) => !completed.has(platform));
+
+    let persistChain = Promise.resolve();
+    const persist = (): Promise<void> => {
+      if (!store) return Promise.resolve();
+      checkpoint!.updatedAt = new Date().toISOString();
+      const snapshot = JSON.parse(JSON.stringify(checkpoint)) as RunCheckpoint;
+      persistChain = persistChain.then(() => store.save(snapshot));
+      return persistChain;
+    };
+    await persist();
+
+    await runBounded(
+      pending,
       options.maxConcurrency ?? this.options.maxConcurrency ?? 2,
-      (platform) => this.runPlatform(runId, definition, platform, variables, options.signal),
+      async (platform) => {
+        checkpoint!.activePlatforms.push(platform);
+        await persist();
+        const result = await this.runPlatform(runId, definition, platform, variables, options.signal);
+        checkpoint!.activePlatforms = checkpoint!.activePlatforms.filter((active) => active !== platform);
+        checkpoint!.completedPlatforms.push(result);
+        completed.set(platform, result);
+        await persist();
+        return result;
+      },
       options.signal
     );
-    return { runId, testId: definition.id, startedAt, durationMs: Date.now() - started, success: platforms.length === definition.platforms.length && platforms.every((result) => result.success), platforms };
+
+    await persistChain;
+    checkpoint.status = options.signal?.aborted ? 'cancelled' : 'completed';
+    await persist();
+    const platforms = definition.platforms.flatMap((platform) => {
+      const result = completed.get(platform);
+      return result ? [result] : [];
+    });
+    return {
+      runId, testId: definition.id, startedAt, durationMs: Date.now() - started,
+      success: !options.signal?.aborted && platforms.length === definition.platforms.length && platforms.every((result) => result.success),
+      platforms
+    };
   }
   private async runPlatform(runId: string, definition: AutomationTestDefinition, platform: PlatformKind, variables: Record<string, string | number | boolean | undefined>, signal?: AbortSignal): Promise<PlatformRunResult> {
     const startedAt = new Date().toISOString(); const started = Date.now(); const steps: PlatformRunResult['steps'] = [];
