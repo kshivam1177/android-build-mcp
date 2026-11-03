@@ -16,7 +16,7 @@ export function register(server: McpServer) {
     inputSchema: {
       platform: z.enum(['android', 'flutter', 'ios', 'web']),
       targetId: z.string().optional(),
-      appId: z.string().optional(),
+      appId: z.string().regex(/^[A-Za-z_][A-Za-z0-9_]*(?:\\.[A-Za-z_][A-Za-z0-9_]*)+$/).optional(),
       baseUrl: z.string().url().optional(),
       metadata: z.record(z.string(), z.union([z.string(), z.number(), z.boolean()])).optional()
     },
