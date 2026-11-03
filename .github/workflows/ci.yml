@@ -4,7 +4,7 @@ on:
   push:
     branches: [master]
   pull_request:
-    branches: [dev, master]
+    branches: [master]
   workflow_dispatch:
 
 permissions:
@@ -52,7 +52,7 @@ jobs:
       - name: Verify tool metadata
         run: npm run docs:check
       - name: Verify operational scripts
-        run: node --check scripts/generate-tool-inventory.mjs && node --check scripts/smoke-published-package.mjs && node --check scripts/run-samsung-device-regression.mjs
+        run: node --check scripts/generate-tool-inventory.mjs && node --check scripts/smoke-published-package.mjs && node --check scripts/run-samsung-device-regression.mjs && node --check scripts/summarize-ci-matrix.mjs
       - name: Verify package contents
         run: npm pack --dry-run
 
