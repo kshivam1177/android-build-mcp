@@ -20,7 +20,7 @@ export class AndroidAdbDriver implements PlatformDriver {
     if (!config.targetId) throw new AutomationError('INVALID_SPEC', 'Android requires an ADB targetId.');
     const appId = config.appId ? validateAppIdentifier(config.appId) : undefined;
     try {
-      if (!(await this.backend.isAvailable(config.targetId))) throw new Error('ADB backend unavailable.');
+      if (!(await this.backend.isAvailable(config.targetId, signal))) throw new Error('ADB backend unavailable.');
       this.targetId = config.targetId;
       this.appId = appId;
       this.session = { id: randomUUID(), platform: 'android', targetId: config.targetId, connectedAt: new Date().toISOString() };
@@ -40,7 +40,7 @@ export class AndroidAdbDriver implements PlatformDriver {
     this.checkAbort(signal);
     const targetId = this.requireTarget();
     try {
-      const nodes = parseUiHierarchy(await this.backend.dumpHierarchy(targetId));
+      const nodes = parseUiHierarchy(await this.backend.dumpHierarchy(targetId, signal));
       return {
         platform: 'android', targetId, snapshotId: randomUUID(), generation: ++this.generation,
         capturedAt: new Date().toISOString(),
@@ -85,16 +85,16 @@ export class AndroidAdbDriver implements PlatformDriver {
           if (!bounds) throw new AutomationError('ELEMENT_NOT_FOUND', 'Android element has no bounds.');
           const x = bounds.x + bounds.width / 2;
           const y = bounds.y + bounds.height / 2;
-          if (action.type === 'tap') await this.backend.tap(targetId, x, y);
+          if (action.type === 'tap') await this.backend.tap(targetId, x, y, signal);
           else if (action.type === 'type') {
             if (action.clearFirst) throw new AutomationError('UNSUPPORTED_CAPABILITY', 'ADB text replacement is not yet implemented safely; omit clearFirst or use a platform-specific clear action.');
-            await this.backend.typeText(targetId, action.text);
+            await this.backend.typeText(targetId, action.text, signal);
           }
-          else await this.backend.longPress(targetId, x, y, action.durationMs);
+          else await this.backend.longPress(targetId, x, y, action.durationMs, signal);
           break;
         }
-        case 'back': await this.backend.keyEvent(targetId, 'KEYCODE_BACK'); break;
-        case 'key': await this.backend.keyEvent(targetId, action.key); break;
+        case 'back': await this.backend.keyEvent(targetId, 'KEYCODE_BACK', signal); break;
+        case 'key': await this.backend.keyEvent(targetId, action.key, signal); break;
         case 'wait': await this.delay(action.timeoutMs ?? 250, signal); break;
         case 'swipe': {
           const snapshot = await this.snapshot(signal);
@@ -105,7 +105,7 @@ export class AndroidAdbDriver implements PlatformDriver {
           const y = Math.round(height / 2);
           const distance = Math.round((action.distance ?? 0.65) * (action.direction === 'left' || action.direction === 'right' ? width : height));
           const delta = { up: [0, -distance], down: [0, distance], left: [-distance, 0], right: [distance, 0] }[action.direction];
-          await this.backend.swipe(targetId, x, y, Math.max(0, Math.min(width, x + delta[0]!)), Math.max(0, Math.min(height, y + delta[1]!)));
+          await this.backend.swipe(targetId, x, y, Math.max(0, Math.min(width, x + delta[0]!)), Math.max(0, Math.min(height, y + delta[1]!)), undefined, signal);
           break;
         }
         case 'hideKeyboard': {
@@ -163,7 +163,7 @@ export class AndroidAdbDriver implements PlatformDriver {
   async captureEvidence(signal?: AbortSignal): Promise<EvidenceBundle> {
     this.checkAbort(signal);
     const targetId = this.requireTarget();
-    const [screenshot, snapshot] = await Promise.all([this.backend.screenshot(targetId), this.snapshot(signal)]);
+    const [screenshot, snapshot] = await Promise.all([this.backend.screenshot(targetId, signal), this.snapshot(signal)]);
     return { capturedAt: new Date().toISOString(), screenshot, snapshot };
   }
 
