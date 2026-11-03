@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto';
+import { createReadStream } from 'node:fs';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { z } from 'zod';
@@ -26,8 +27,22 @@ function safeRelativePath(value: string): boolean {
 }
 
 async function hashFile(file: string): Promise<{ sizeBytes: number; sha256: string }> {
-  const data = await fs.readFile(file);
-  return { sizeBytes: data.byteLength, sha256: createHash('sha256').update(data).digest('hex') };
+  const stat = await fs.stat(file);
+  const hash = createHash('sha256');
+  for await (const chunk of createReadStream(file)) hash.update(chunk);
+  return { sizeBytes: stat.size, sha256: hash.digest('hex') };
+}
+
+async function assertNoSymlinkPath(directory: string, relative: string): Promise<void> {
+  let current = directory;
+  const segments = relative.split('/');
+  for (let index = 0; index < segments.length; index += 1) {
+    current = path.join(current, segments[index]);
+    const stat = await fs.lstat(current);
+    if (stat.isSymbolicLink()) throw new Error('Symbolic links are not allowed in evidence bundles: ' + relative);
+    if (index < segments.length - 1 && !stat.isDirectory()) throw new Error('Evidence artifact parent is not a directory: ' + relative);
+    if (index === segments.length - 1 && !stat.isFile()) throw new Error('Evidence artifact is not a regular file: ' + relative);
+  }
 }
 
 async function collectFiles(directory: string, relative = ''): Promise<string[]> {
@@ -82,6 +97,8 @@ export async function validateEvidenceManifest(reportDirectory: string): Promise
   unsafe: string[];
 }> {
   const manifestPath = path.join(reportDirectory, 'evidence-manifest.json');
+  const manifestStat = await fs.lstat(manifestPath);
+  if (manifestStat.isSymbolicLink() || !manifestStat.isFile() || manifestStat.size > 5 * 1024 * 1024) throw new Error('Evidence manifest must be a regular file no larger than 5 MiB.');
   const raw = JSON.parse(await fs.readFile(manifestPath, 'utf8'));
   const manifest = manifestSchema.parse(raw);
   const missing: string[] = [];
@@ -101,11 +118,7 @@ export async function validateEvidenceManifest(reportDirectory: string): Promise
       continue;
     }
     try {
-      const stat = await fs.lstat(absolute);
-      if (stat.isSymbolicLink() || !stat.isFile()) {
-        unsafe.push(artifact.path);
-        continue;
-      }
+      await assertNoSymlinkPath(reportDirectory, artifact.path);
       const digest = await hashFile(absolute);
       if (digest.sizeBytes !== artifact.sizeBytes || digest.sha256 !== artifact.sha256) modified.push(artifact.path);
     } catch (error) {
