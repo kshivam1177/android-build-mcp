@@ -34,6 +34,17 @@ describe('runBounded', () => {
     expect(result).toHaveLength(2);
   });
 
+  it('stops assigning new work after a worker fails', async () => {
+    const started: number[] = [];
+    await expect(runBounded([1, 2, 3, 4], 2, async (value) => {
+      started.push(value);
+      if (value === 1) throw new Error('worker failed');
+      await new Promise((resolve) => setTimeout(resolve, 5));
+      return value;
+    })).rejects.toThrow('worker failed');
+    expect(started).toEqual([1, 2]);
+  });
+
   it('rejects unsafe concurrency values', async () => {
     await expect(runBounded([1], 0, async (value) => value)).rejects.toThrow('between 1 and 32');
   });
