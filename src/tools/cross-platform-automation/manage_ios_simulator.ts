@@ -2,6 +2,7 @@ import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { withErrorHandling, textResult } from '../../utils/response.js';
 import { listIosSimulators, setIosSimulatorState } from '../../platform/ios/simulator.js';
+import { AutomationError } from '../../platform/contracts.js';
 import type { ToolModule } from '../types.js';
 
 export const toolName = 'manage_ios_simulator';
@@ -22,7 +23,7 @@ export function register(server: McpServer) {
       const result = { action: 'list', count: simulators.length, simulators };
       return textResult(JSON.stringify(result, null, 2), result);
     }
-    if (!args.udid) throw new Error('A simulator UDID is required for boot and shutdown.');
+    if (!args.udid) throw new AutomationError('INVALID_SPEC', 'A simulator UDID is required for boot and shutdown.');
     const result = await setIosSimulatorState(args.udid, args.action);
     return textResult(JSON.stringify(result, null, 2), { ...result });
   }));
