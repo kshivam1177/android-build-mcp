@@ -19,6 +19,11 @@ describe('execCommand cancellation', () => {
       .rejects.toMatchObject({ code: 'COMMAND_FAILED', details: { cancelled: true } });
   });
 
+  it('terminates a child that exceeds its command timeout', async () => {
+    await expect(execCommand(process.execPath, ['-e', 'setTimeout(() => process.exit(0), 10000)'], { timeoutMs: 25 }))
+      .rejects.toMatchObject({ code: 'TIMEOUT' });
+  });
+
   it('terminates a running child when its signal is aborted', async () => {
     const controller = new AbortController();
     const running = execCommand(process.execPath, ['-e', 'setTimeout(() => process.exit(0), 10000)'], { signal: controller.signal });
