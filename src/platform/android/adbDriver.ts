@@ -109,7 +109,7 @@ export class AndroidAdbDriver implements PlatformDriver {
         }
         case 'hideKeyboard': {
           const ime = await runAdbShell(targetId, ['dumpsys', 'input_method'], { timeoutMs: 5000 });
-          const keyboardVisible = /\\bmInputShown=true\\b|\\bmIsInputViewShown=true\\b|\\bmShowRequested=true\\b/i.test(ime.stdout);
+          const keyboardVisible = /\bmInputShown=true\b|\bmIsInputViewShown=true\b|\bmShowRequested=true\b/i.test(ime.stdout);
           if (keyboardVisible) await this.backend.keyEvent(targetId, 'KEYCODE_BACK');
           else dispatched = false;
           break;
