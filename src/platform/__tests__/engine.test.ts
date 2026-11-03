@@ -4,13 +4,13 @@ import { parseAutomationTest } from '../specification.js';
 import type { PlatformDriver } from '../contracts.js';
 
 function fakeDriver(platform: 'android' | 'ios' | 'web'): PlatformDriver {
-  const session = { id: `session-${platform}`, platform, targetId: platform, connectedAt: new Date().toISOString() };
+  const session = { id: 'session-' + platform, platform, targetId: platform, connectedAt: new Date().toISOString() };
   return {
     platform,
     connect: vi.fn(async () => session),
     capabilities: vi.fn(async () => ({ platform, snapshots: true, accessibilityTree: true, screenshots: true, gestures: true,
       appLifecycle: true, browserNavigation: true, nativeDialogs: true, supportedActions: ['tap', 'wait'] })),
-    snapshot: vi.fn(async () => ({ platform, targetId: platform, snapshotId: 'snapshot', generation: 1, capturedAt: new Date().toISOString(), nodes: [] })),
+    snapshot: vi.fn(async () => ({ platform, targetId: platform, snapshotId: 'snapshot', generation: 1, capturedAt: new Date().toISOString(), nodes: [{ ref: 'e1', text: 'Ready', enabled: true, visible: true }] })),
     resolve: vi.fn(async () => { throw new Error('not used'); }),
     perform: vi.fn(async (action) => ({ action: action.type, startedAt: new Date().toISOString(), durationMs: 1, target: null, dispatched: true })),
     waitFor: vi.fn(async () => ({ platform, targetId: platform, snapshotId: 'snapshot', generation: 1, capturedAt: new Date().toISOString(), nodes: [] })),
@@ -63,5 +63,31 @@ describe('AutomationEngine', () => {
     const result = await new AutomationEngine({ drivers: { android } }).run(definition);
     expect(result.success).toBe(true);
     expect(android.waitFor).toHaveBeenCalledOnce();
+  });
+
+  it('executes snapshot assertions without dispatching a platform action', async () => {
+    const android = fakeDriver('android');
+    const definition = parseAutomationTest({
+      schemaVersion: '1.0', id: 'assertion', name: 'Assert welcome',
+      platforms: ['android'],
+      steps: [{ id: 'welcome', type: 'assert', assertion: { kind: 'textContains', selector: { strategy: 'text', value: 'Ready' }, expected: 'Rea' } }]
+    });
+    const result = await new AutomationEngine({ drivers: { android } }).run(definition);
+    expect(result.success).toBe(true);
+    expect(android.snapshot).toHaveBeenCalledOnce();
+    expect(android.perform).not.toHaveBeenCalled();
+  });
+
+  it('fails an assertion and captures evidence when the expected state is absent', async () => {
+    const android = fakeDriver('android');
+    const definition = parseAutomationTest({
+      schemaVersion: '1.0', id: 'assertion-fail', name: 'Assert missing title',
+      platforms: ['android'],
+      steps: [{ id: 'title', type: 'assert', assertion: { kind: 'exists', selector: { strategy: 'text', value: 'Missing' } } }]
+    });
+    const result = await new AutomationEngine({ drivers: { android } }).run(definition);
+    expect(result.success).toBe(false);
+    expect(result.platforms[0]?.steps[0]?.status).toBe('failed');
+    expect(result.platforms[0]?.evidence).toBeDefined();
   });
 });
