@@ -12,7 +12,7 @@ export interface PlatformRunResult {
   error?: string;
   evidence?: { capturedAt: string; screenshot?: { mimeType: string; base64: string }; snapshot?: import('./contracts.js').PlatformSnapshot };
 }
-export interface AutomationRunResult { runId: string; testId: string; success: boolean; startedAt: string; durationMs: number; platforms: PlatformRunResult[]; }
+export interface AutomationRunResult { runId: string; testId: string; success: boolean; cancelled: boolean; timedOut: boolean; startedAt: string; durationMs: number; platforms: PlatformRunResult[]; }
 export interface AutomationEngineOptions {
   drivers: Partial<Record<PlatformKind, PlatformDriver>>;
   sessions?: DriverSessionManager;
@@ -31,9 +31,36 @@ export class AutomationEngine {
     maxConcurrency?: number;
     checkpointStore?: RunCheckpointStore;
     resume?: boolean;
-    /** Explicitly permits restarting platforms that were active when the prior process stopped. */
     restartInterruptedPlatforms?: boolean;
+    timeoutMs?: number;
   } = {}): Promise<AutomationRunResult> {
+    const controller = new AbortController();
+    const relayAbort = () => controller.abort();
+    if (options.signal?.aborted) controller.abort();
+    else options.signal?.addEventListener('abort', relayAbort, { once: true });
+    let timedOut = false;
+    const timeout = options.timeoutMs === undefined ? undefined : setTimeout(() => {
+      timedOut = true;
+      controller.abort();
+    }, options.timeoutMs);
+    timeout?.unref?.();
+    try {
+      const result = await this.execute(definition, { ...options, signal: controller.signal });
+      return { ...result, cancelled: controller.signal.aborted, timedOut };
+    } finally {
+      if (timeout) clearTimeout(timeout);
+      options.signal?.removeEventListener('abort', relayAbort);
+    }
+  }
+
+  private async execute(definition: AutomationTestDefinition, options: {
+    signal?: AbortSignal;
+    variables?: Record<string, string | number | boolean>;
+    maxConcurrency?: number;
+    checkpointStore?: RunCheckpointStore;
+    resume?: boolean;
+    restartInterruptedPlatforms?: boolean;
+  }): Promise<AutomationRunResult> {
     const started = Date.now();
     const variables = { ...definition.variables, ...options.variables };
     const definitionHash = createHash('sha256').update(JSON.stringify({ definition, variables })).digest('hex');
@@ -98,6 +125,7 @@ export class AutomationEngine {
     return {
       runId, testId: definition.id, startedAt, durationMs: Date.now() - started,
       success: !options.signal?.aborted && platforms.length === definition.platforms.length && platforms.every((result) => result.success),
+      cancelled: options.signal?.aborted ?? false, timedOut: false,
       platforms
     };
   }
