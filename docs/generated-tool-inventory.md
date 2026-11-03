@@ -13,7 +13,7 @@ Generated from the registered MCP tool list. Run npm run docs:generate to refres
 | cross-platform-automation | check_cross_platform_runtime |
 | cross-platform-automation | diagnose_cross_platform_failure |
 | cross-platform-automation | inspect_cross_platform_target |
-| cross-platform-automation | manage_ios_simulator |
+| cross-platform-automation | manage_cross_platform_fleet |\n| cross-platform-automation | manage_ios_simulator |
 | cross-platform-automation | run_cross_platform_suite |
 | cross-platform-automation | run_cross_platform_test |
 | cross-platform-automation | validate_cross_platform_test |
