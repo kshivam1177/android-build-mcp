@@ -8,7 +8,7 @@ describe('cross-platform JUnit reporting', () => {
       runId: 'run-1', testId: 'smoke', success: false, cancelled: true, timedOut: false,
       startedAt: new Date().toISOString(), durationMs: 20,
       summary: {
-        totalPlatforms: 1, completedPlatforms: 1, passedPlatforms: 0, failedPlatforms: 1,
+        totalPlatforms: 1, completedPlatforms: 1, passedPlatforms: 0, failedPlatforms: 1, cancelledPlatforms: 0,
         totalSteps: 1, failedSteps: 1, retriedSteps: 1, totalAttempts: 2
       },
       platforms: [{
