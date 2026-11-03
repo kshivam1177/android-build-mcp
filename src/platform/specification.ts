@@ -8,6 +8,13 @@ const selectorSchema = z.object({
   index: z.number().int().nonnegative().optional()
 }).strict();
 
+const waitConditionSchema = z.discriminatedUnion('kind', [
+  z.object({ kind: z.literal('visible'), selector: selectorSchema }),
+  z.object({ kind: z.literal('absent'), selector: selectorSchema }),
+  z.object({ kind: z.literal('text'), selector: selectorSchema, equals: z.string().optional(), contains: z.string().optional() }),
+  z.object({ kind: z.literal('url'), equals: z.string().optional(), contains: z.string().optional() })
+]);
+
 const actionSchema = z.discriminatedUnion('type', [
   z.object({ id: z.string().min(1), type: z.literal('tap'), selector: selectorSchema }),
   z.object({ id: z.string().min(1), type: z.literal('type'), selector: selectorSchema, value: z.string(), clearFirst: z.boolean().optional(), sensitive: z.boolean().optional() }),
@@ -15,7 +22,8 @@ const actionSchema = z.discriminatedUnion('type', [
   z.object({ id: z.string().min(1), type: z.literal('swipe'), direction: z.enum(['up', 'down', 'left', 'right']), distance: z.number().positive().max(1).optional() }),
   z.object({ id: z.string().min(1), type: z.literal('back') }),
   z.object({ id: z.string().min(1), type: z.literal('navigate'), url: z.string().url() }),
-  z.object({ id: z.string().min(1), type: z.literal('wait'), timeoutMs: z.number().int().positive().max(120000).optional() })
+  z.object({ id: z.string().min(1), type: z.literal('wait'), timeoutMs: z.number().int().positive().max(120000).optional() }),
+  z.object({ id: z.string().min(1), type: z.literal('waitFor'), condition: waitConditionSchema, timeoutMs: z.number().int().positive().max(120000).default(10000) })
 ]);
 
 export const automationTestSchema = z.object({
