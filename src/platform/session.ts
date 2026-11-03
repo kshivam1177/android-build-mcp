@@ -5,6 +5,7 @@ export interface ManagedSession {
   readonly session: DriverSession;
   readonly driver: PlatformDriver;
   readonly config: DriverConfig;
+  readonly targetKey: string;
 }
 
 /**
@@ -43,7 +44,7 @@ export class DriverSessionManager {
         await driver.disconnect();
         throw new AutomationError('CANCELLED', 'Connection was cancelled after the driver connected.');
       }
-      const managed = { session, driver, config };
+      const managed = { session, driver, config, targetKey };
       this.sessions.set(session.id, managed);
       return managed;
     } catch (error) {
@@ -75,8 +76,7 @@ export class DriverSessionManager {
     try { await managed.driver.disconnect(); }
     finally {
       this.driverOwners.delete(managed.driver);
-      const targetKey = managed.config.targetId ?? managed.session.id;
-      if (this.activeTargets.get(targetKey) === managed.driver) this.activeTargets.delete(targetKey);
+      if (this.activeTargets.get(managed.targetKey) === managed.driver) this.activeTargets.delete(managed.targetKey);
     }
   }
 
