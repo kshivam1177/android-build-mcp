@@ -15,6 +15,7 @@ export class AgentBrowserDriver implements PlatformDriver {
   private sessionName = '';
   private command = process.env.AGENT_BROWSER_PATH || 'agent-browser';
   private timeoutMs = 30000;
+  private generation = 0;
 
   async connect(config: DriverConfig, signal?: AbortSignal): Promise<DriverSession> {
     if (signal?.aborted) throw new AutomationError('CANCELLED', 'Browser connection cancelled.');
@@ -53,7 +54,7 @@ export class AgentBrowserDriver implements PlatformDriver {
       attributes: Object.fromEntries(Object.entries(value).filter((entry): entry is [string, string | number | boolean] =>
         ['string', 'number', 'boolean'].includes(typeof entry[1])))
     }));
-    return { platform: 'web', targetId: this.sessionName, snapshotId: randomUUID(), generation: Date.now(), capturedAt: new Date().toISOString(), nodes, raw: parsed.data.snapshot };
+    return { platform: 'web', targetId: this.sessionName, snapshotId: randomUUID(), generation: ++this.generation, capturedAt: new Date().toISOString(), nodes, raw: parsed.data.snapshot };
   }
 
   async resolve(selector: SemanticSelector, snapshot?: PlatformSnapshot): Promise<ResolvedElement> {
@@ -137,7 +138,7 @@ export class AgentBrowserDriver implements PlatformDriver {
     this.ensureConnected(signal);
     await new Promise<void>((resolve, reject) => {
       const timer = setTimeout(() => { signal?.removeEventListener('abort', abort); resolve(); }, ms);
-      const abort = () => { clearTimeout(timer); reject(new AutomationError('CANCELLED', 'Browser wait cancelled.')); };
+      const abort = () => { clearTimeout(timer); signal?.removeEventListener('abort', abort); reject(new AutomationError('CANCELLED', 'Browser wait cancelled.')); };
       signal?.addEventListener('abort', abort, { once: true });
     });
   }
