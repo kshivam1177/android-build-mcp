@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import { createHash } from 'node:crypto';
 import { AutomationEngine } from '../engine.js';
 import { parseAutomationTest } from '../specification.js';
 import type { PlatformDriver } from '../contracts.js';
@@ -139,7 +140,7 @@ describe('AutomationEngine checkpoint resume', () => {
       durationMs: 12, steps: [{ id: 'done', type: 'wait', status: 'passed' as const, durationMs: 1 }]
     };
     const checkpoint = {
-      version: 1 as const, runId: 'existing-run', testId: 'resume-test',
+      version: 1 as const, runId: 'existing-run', testId: 'resume-test', definitionHash: 'PLACEHOLDER',
       startedAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
       status: 'running' as const, activePlatforms: [], completedPlatforms: [completed]
     };
@@ -148,6 +149,7 @@ describe('AutomationEngine checkpoint resume', () => {
       schemaVersion: '1.0', id: 'resume-test', name: 'Resume test',
       platforms: ['android', 'web'], steps: [{ id: 'settle', type: 'wait', timeoutMs: 1 }]
     });
+    checkpoint.definitionHash = createHash('sha256').update(JSON.stringify({ definition, variables: definition.variables ?? {} })).digest('hex');
     const result = await new AutomationEngine({ drivers: { android, web } }).run(definition, {
       checkpointStore: store, resume: true
     });
@@ -161,7 +163,7 @@ describe('AutomationEngine checkpoint resume', () => {
     const android = fakeDriver('android');
     const store = {
       load: vi.fn(async () => ({
-        version: 1 as const, runId: 'interrupted-run', testId: 'interrupted',
+        version: 1 as const, runId: 'interrupted-run', testId: 'interrupted', definitionHash: 'irrelevant',
         startedAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
         status: 'running' as const, activePlatforms: ['android' as const], completedPlatforms: []
       })),
