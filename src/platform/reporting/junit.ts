@@ -33,7 +33,7 @@ export function toJunitXml(result: AutomationRunResult): string {
     const properties = source ? '<properties><property name="attempts" value="' + source.attempts + '"/></properties>' : '';
     return '<testcase classname="' + escapeXml(item.classname) + '" name="' + escapeXml(item.name) + '" time="' + item.time + '">' + properties + failure + skip + '</testcase>';
   }).join('');
-  const retriedSteps = result.summary?.retriedSteps ?? cases.filter((item) => item.status === 'passed' && item.name.length > 0).length;
+  const retriedSteps = result.summary?.retriedSteps ?? 0;
   const totalAttempts = result.summary?.totalAttempts ?? cases.length;
   const suiteProperties = '<properties>' +
     '<property name="cancelled" value="' + String(result.cancelled ?? false) + '"/>' +
