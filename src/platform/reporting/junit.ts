@@ -33,5 +33,11 @@ export function toJunitXml(result: AutomationRunResult): string {
     const properties = source ? '<properties><property name="attempts" value="' + source.attempts + '"/></properties>' : '';
     return '<testcase classname="' + escapeXml(item.classname) + '" name="' + escapeXml(item.name) + '" time="' + item.time + '">' + properties + failure + skip + '</testcase>';
   }).join('');
-  return '<?xml version="1.0" encoding="UTF-8"?>\n<testsuite name="' + escapeXml(result.testId) + '" tests="' + cases.length + '" failures="' + failures + '" skipped="' + skipped + '" time="' + seconds + '">' + body + '</testsuite>\n';
+  const suiteProperties = '<properties>' +
+    '<property name="cancelled" value="' + String(result.cancelled) + '"/>' +
+    '<property name="timedOut" value="' + String(result.timedOut) + '"/>' +
+    '<property name="retriedSteps" value="' + result.summary.retriedSteps + '"/>' +
+    '<property name="totalAttempts" value="' + result.summary.totalAttempts + '"/>' +
+    '</properties>';
+  return '<?xml version="1.0" encoding="UTF-8"?>\\n<testsuite name="' + escapeXml(result.testId) + '" tests="' + cases.length + '" failures="' + failures + '" skipped="' + skipped + '" time="' + seconds + '">' + suiteProperties + body + '</testsuite>\\n';
 }
