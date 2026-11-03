@@ -7,13 +7,6 @@ function escapeXml(value: string): string {
 /** Convert platform and step outcomes to JUnit XML without counting skipped work as passed. */
 export function toJunitXml(result: AutomationRunResult): string {
   const cases = result.platforms.flatMap((platform) => {
-    const platformCase = {
-      name: platform.platform + ' platform',
-      classname: result.testId,
-      time: (platform.durationMs / 1000).toFixed(3),
-      status: platform.success ? 'passed' : 'failed',
-      message: platform.error ?? ''
-    };
     const stepCases = platform.steps.map((step) => ({
       name: platform.platform + ' / ' + step.id,
       classname: result.testId,
@@ -21,7 +14,14 @@ export function toJunitXml(result: AutomationRunResult): string {
       status: step.status,
       message: step.error ?? ''
     }));
-    return [platformCase, ...stepCases];
+    if (stepCases.length) return stepCases;
+    return [{
+      name: platform.platform + ' platform setup',
+      classname: result.testId,
+      time: (platform.durationMs / 1000).toFixed(3),
+      status: platform.success ? 'passed' : 'failed',
+      message: platform.error ?? ''
+    }];
   });
   const failures = cases.filter((item) => item.status === 'failed').length;
   const skipped = cases.filter((item) => item.status === 'skipped').length;
