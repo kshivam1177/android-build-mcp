@@ -19,7 +19,7 @@ export function register(server: McpServer) {
     annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true }
   }, withErrorHandling(async (args: { platforms: PlatformKind[]; flutterOsPlatform?: 'android' | 'ios' }) => {
     const result = await inspectPlatformReadiness(args.platforms, { flutterOsPlatform: args.flutterOsPlatform });
-    return textResult(JSON.stringify(result, null, 2), result);
+    return textResult(JSON.stringify(result, null, 2), { ...result });
   }));
 }
 
