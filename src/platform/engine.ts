@@ -7,6 +7,7 @@ export interface PlatformRunResult {
   platform: PlatformKind; sessionId?: string; success: boolean; startedAt: string; durationMs: number;
   steps: Array<{ id: string; type: string; status: 'passed' | 'failed' | 'skipped'; durationMs: number; error?: string }>;
   error?: string;
+  evidence?: { capturedAt: string; screenshot?: { mimeType: string; base64: string }; snapshot?: import('./contracts.js').PlatformSnapshot };
 }
 export interface AutomationRunResult { runId: string; testId: string; success: boolean; startedAt: string; durationMs: number; platforms: PlatformRunResult[]; }
 export interface AutomationEngineOptions {
@@ -30,6 +31,7 @@ export class AutomationEngine {
     const driver = this.options.drivers[platform];
     if (!driver) return { platform, success: false, startedAt, durationMs: Date.now() - started, steps, error: `No driver registered for platform ${platform}.` };
     let sessionId: string | undefined; let platformError: string | undefined;
+    let evidence: PlatformRunResult['evidence'];
     try {
       const target = definition.targets?.[platform];
       const config: DriverConfig = { platform, ...(target?.targetId ? { targetId: target.targetId } : {}), ...(target?.appId ? { appId: target.appId } : {}), ...(target?.baseUrl ? { baseUrl: target.baseUrl } : {}), ...(target?.metadata ? { metadata: target.metadata } : {}) };
@@ -51,12 +53,17 @@ export class AutomationEngine {
         } catch (error) {
           const message = error instanceof Error ? error.message : String(error);
           steps.push({ id: step.id, type: step.type, status: 'failed', durationMs: Date.now() - stepStarted, error: redact(message, variables) });
-          this.options.onStep?.({ runId, platform, stepId: step.id, status: 'failed' }); platformError = message; break;
+          this.options.onStep?.({ runId, platform, stepId: step.id, status: 'failed' }); platformError = message;
+          try {
+            const captured = await driver.captureEvidence();
+            evidence = { capturedAt: captured.capturedAt, ...(captured.screenshot ? { screenshot: { mimeType: captured.screenshot.mimeType, base64: captured.screenshot.data.toString('base64') } } : {}), ...(captured.snapshot ? { snapshot: captured.snapshot } : {}) };
+          } catch { /* Preserve the original step failure if evidence capture also fails. */ }
+          break;
         }
       }
     } catch (error) { platformError = error instanceof Error ? error.message : String(error); }
     finally { if (sessionId) { try { await this.sessions.close(sessionId); } catch (error) { platformError ??= `Session cleanup failed: ${error instanceof Error ? error.message : String(error)}`; } } }
-    return { platform, ...(sessionId ? { sessionId } : {}), success: !platformError && steps.length === definition.steps.length && steps.every((s) => s.status === 'passed'), startedAt, durationMs: Date.now() - started, steps, ...(platformError ? { error: redact(platformError, variables) } : {}) };
+    return { platform, ...(sessionId ? { sessionId } : {}), success: !platformError && steps.length === definition.steps.length && steps.every((s) => s.status === 'passed'), startedAt, durationMs: Date.now() - started, steps, ...(platformError ? { error: redact(platformError, variables) } : {}), ...(evidence ? { evidence } : {}) };
   }
 }
 
