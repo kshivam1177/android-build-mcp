@@ -73,8 +73,13 @@ export function register(server: McpServer) {
       const selected = args.targetId ? targets.filter((target) => target.id === args.targetId) : targets.filter((target) => target.enabled);
       if (args.targetId && selected.length === 0) throw new Error('Fleet target not found: ' + args.targetId);
       const drivers = createPlatformDrivers();
-      const checks = [];
+      const activeLeases = await fleet.activeLeases();
+      const checks: Array<{ id: string; platform: PlatformKind; healthy: boolean; skipped?: boolean; reason?: string; sessionTargetId?: string; capabilities?: unknown; error?: string; cleanupError?: string }> = [];
       for (const target of selected) {
+        if (activeLeases.some((lease) => lease.targetId === target.id)) {
+          checks.push({ id: target.id, platform: target.platform as PlatformKind, healthy: false, skipped: true, reason: 'Target is currently leased; health probe skipped to avoid disrupting an active run.' });
+          continue;
+        }
         const driver = drivers[target.platform as PlatformKind];
         let connected = false;
         try {
@@ -91,7 +96,7 @@ export function register(server: McpServer) {
           }
         }
       }
-      const result = { checked: checks.length, healthy: checks.filter((item) => item.healthy).length, unhealthy: checks.filter((item) => !item.healthy).length, checks };
+      const result = { checked: checks.length, healthy: checks.filter((item) => item.healthy).length, unhealthy: checks.filter((item) => !item.healthy && !item.skipped).length, skipped: checks.filter((item) => item.skipped).length, checks };
       return textResult(JSON.stringify(result, null, 2), result);
     }
     throw new Error('Unsupported fleet action.');
