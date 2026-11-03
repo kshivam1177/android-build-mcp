@@ -8,7 +8,7 @@ import type { AutomationTestDefinition, AutomationTestStep } from './specificati
 
 export interface PlatformRunResult {
   platform: PlatformKind; sessionId?: string; success: boolean; startedAt: string; durationMs: number;
-  steps: Array<{ id: string; type: string; status: 'passed' | 'failed' | 'skipped'; durationMs: number; error?: string }>;
+  steps: Array<{ id: string; type: string; status: 'passed' | 'failed' | 'skipped'; durationMs: number; attempts?: number; error?: string }>;
   error?: string;
   evidence?: { capturedAt: string; screenshot?: { mimeType: string; base64: string }; snapshot?: import('./contracts.js').PlatformSnapshot };
 }
@@ -115,7 +115,9 @@ export class AutomationEngine {
       for (const step of definition.steps) {
         if (signal?.aborted) throw new AutomationError('CANCELLED', 'Test run was cancelled.');
         const stepStarted = Date.now(); this.options.onStep?.({ runId, platform, stepId: step.id, status: 'started' });
-        try {
+        let attempts = 0;
+        const maxReadRetries = step.type === 'waitFor' || step.type === 'assert' ? definition.policy.maxRecoveryAttempts : 0;
+        const executeStep = async (): Promise<void> => {
           if (step.type === 'waitFor') {
             await driver.waitFor(step.condition, step.timeoutMs, signal);
           } else if (step.type === 'assert') {
@@ -130,11 +132,22 @@ export class AutomationEngine {
             if (!capabilities.supportedActions.includes(action.type)) throw new AutomationError('UNSUPPORTED_CAPABILITY', 'Platform ' + platform + ' does not support ' + action.type + '.', { platform, action: action.type });
             await driver.perform(action, signal);
           }
-          steps.push({ id: step.id, type: step.type, status: 'passed', durationMs: Date.now() - stepStarted });
+        };
+        try {
+          while (true) {
+            attempts += 1;
+            try {
+              await executeStep();
+              break;
+            } catch (error) {
+              if (attempts > maxReadRetries || !isRetryableReadOnlyFailure(step, error) || signal?.aborted) throw error;
+            }
+          }
+          steps.push({ id: step.id, type: step.type, status: 'passed', durationMs: Date.now() - stepStarted, attempts });
           this.options.onStep?.({ runId, platform, stepId: step.id, status: 'passed' });
         } catch (error) {
           const message = error instanceof Error ? error.message : String(error);
-          steps.push({ id: step.id, type: step.type, status: 'failed', durationMs: Date.now() - stepStarted, error: redact(message, variables) });
+          steps.push({ id: step.id, type: step.type, status: 'failed', durationMs: Date.now() - stepStarted, attempts, error: redact(message, variables) });
           this.options.onStep?.({ runId, platform, stepId: step.id, status: 'failed' }); platformError = message;
           try {
             const captured = await driver.captureEvidence();
@@ -170,4 +183,11 @@ function interpolate(value: string, variables: Record<string, string | number | 
 }
 function redact(message: string, variables: Record<string, string | number | boolean | undefined>): string {
   let result = message; for (const value of Object.values(variables)) if (typeof value === 'string' && value.length >= 4) result = result.split(value).join('[REDACTED]'); return result;
+}
+
+
+function isRetryableReadOnlyFailure(step: AutomationTestStep, error: unknown): boolean {
+  if (step.type !== 'waitFor' && step.type !== 'assert') return false;
+  if (!(error instanceof AutomationError)) return false;
+  return ['STALE_SNAPSHOT', 'ACTION_TIMEOUT', 'DRIVER_UNAVAILABLE'].includes(error.code);
 }
