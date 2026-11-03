@@ -1,4 +1,3 @@
-| cross-platform-automation | manage_ios_simulator |
 # Generated MCP Tool Inventory
 
 Generated from the registered MCP tool list. Run npm run docs:generate to refresh this file; CI checks for drift.
@@ -114,3 +113,4 @@ Generated from the registered MCP tool list. Run npm run docs:generate to refres
 | ui-automation | wait_for_ui |
 | workflow-discovery | manage_workflows |
 | cross-platform-automation | check_cross_platform_runtime |
+| cross-platform-automation | manage_ios_simulator |
