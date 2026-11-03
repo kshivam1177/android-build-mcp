@@ -4,6 +4,13 @@ This addendum expands the initial driver/orchestrator slice with deterministic q
 
 ## Included in this increment
 
+- Android/iOS keyboard dismissal and app launch/termination actions in the shared test definition and engine.
+- Android keyboard dismissal checks IME visibility first and does not send BACK when the keyboard is already hidden.
+- Native app identifiers are validated before command dispatch to prevent shell metacharacter injection.
+- Native permission prompts are classified as a distinct state; the framework never auto-grants or denies permissions.
+- iOS simulator inventory, boot and shutdown manager plus an MCP tool; boot waits for simulator readiness and shutdown never erases simulator data.
+- iOS simulator manager tests use an injectable command runner and cover macOS gating, idempotent boot and invalid UDIDs.
+
 - Cross-platform runtime preflight MCP tool with Android, Flutter, iOS and Web dependency checks and actionable remediation.
 - Android and iOS `hideKeyboard`, `launchApp` and `terminateApp` actions exposed through the versioned test schema and deterministic engine.
 - Flutter delegates lifecycle and keyboard operations to its selected native OS driver.
