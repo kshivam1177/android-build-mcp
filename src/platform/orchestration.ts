@@ -35,6 +35,6 @@ export async function runBounded<T, R>(
   };
 
   await Promise.all(Array.from({ length: Math.min(concurrency, items.length) }, () => consume()));
-  if (firstError) throw firstError;
+  if (failed) throw firstError ?? new AutomationError('ACTION_FAILED', 'A scheduled worker failed without providing an error.');
   return results.filter((_value, index) => index < nextIndex && index in results);
 }
