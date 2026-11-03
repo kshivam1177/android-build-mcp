@@ -4,7 +4,7 @@ import { suggestRecovery } from '../recovery.js';
 import { AutomationError } from '../contracts.js';
 
 describe('execution policy', () => {
-  const action = { type: 'tap', selector: { strategy: 'text' as const, value: 'Confirm' } };
+  const action = { type: 'tap', selector: { strategy: 'text' as const, value: 'Confirm' } } as const;
   it('blocks destructive intent unless explicitly allowed', () => {
     expect(evaluateActionPolicy({ action, risk: 'destructive', reason: 'Delete record' }, { allowDestructiveActions: false }).allowed).toBe(false);
   });
