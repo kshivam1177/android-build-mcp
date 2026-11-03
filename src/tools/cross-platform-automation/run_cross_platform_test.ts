@@ -8,6 +8,8 @@ import { resolveProjectRoot } from '../../utils/paths.js';
 import { AutomationEngine } from '../../platform/engine.js';
 import { createPlatformDrivers } from '../../platform/drivers.js';
 import { parseAutomationTest } from '../../platform/specification.js';
+import { toJunitXml } from '../../platform/reporting/junit.js';
+import { redactSensitiveText } from '../../platform/reporting/redaction.js';
 import type { ToolModule } from '../types.js';
 
 export const toolName = 'run_cross_platform_test';
@@ -16,7 +18,7 @@ export const workflow = 'cross-platform-automation';
 export function register(server: McpServer) {
   return server.registerTool(toolName, {
     title: 'Run Cross-Platform Test',
-    description: 'Execute one validated test definition against Android, Flutter, iOS and/or Web drivers. Produces JSON and Markdown reports under .androidmcp-framework/test-reports.',
+    description: 'Execute one validated test definition across Android, Flutter, iOS and/or Web. Produces redacted JSON, Markdown and JUnit reports with failure evidence under .androidmcp-framework/test-reports.',
     inputSchema: {
       testDefinition: z.unknown().describe('Complete schemaVersion 1.0 test definition.'),
       projectPath: z.string().optional().describe('Project root for report output; defaults to the current working directory.'),
@@ -53,7 +55,10 @@ export function register(server: McpServer) {
     };
     const jsonPath = path.join(reportDirectory, 'cross-platform-report.json');
     const markdownPath = path.join(reportDirectory, 'cross-platform-report.md');
-    await fs.writeFile(jsonPath, JSON.stringify(reportResult, null, 2), 'utf8');
+    const junitPath = path.join(reportDirectory, 'junit.xml');
+    const secrets = Object.values(args.variables ?? {}).filter((value): value is string => typeof value === 'string');
+    const jsonText = redactSensitiveText(JSON.stringify(reportResult, null, 2), secrets);
+    await fs.writeFile(jsonPath, jsonText, 'utf8');
     const lines = [
       '# Cross-platform test report', '',
       '- Test: ' + result.testId,
@@ -73,11 +78,12 @@ export function register(server: McpServer) {
       }
       lines.push('');
     }
-    await fs.writeFile(markdownPath, lines.join('\n'), 'utf8');
+    await fs.writeFile(markdownPath, redactSensitiveText(lines.join('\n'), secrets), 'utf8');
+    await fs.writeFile(junitPath, redactSensitiveText(toJunitXml(result), secrets), 'utf8');
     const summary = {
       success: result.success, testId: result.testId, runId: result.runId,
       platforms: reportResult.platforms.map((platform) => ({ platform: platform.platform, success: platform.success, durationMs: platform.durationMs, error: platform.error, evidence: platform.evidence ? true : false })),
-      reportDirectory, jsonReport: jsonPath, markdownReport: markdownPath
+      reportDirectory, jsonReport: jsonPath, markdownReport: markdownPath, junitReport: junitPath
     };
     return textResult(JSON.stringify(summary, null, 2), summary);
   }));
