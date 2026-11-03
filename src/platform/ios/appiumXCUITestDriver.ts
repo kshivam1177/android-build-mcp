@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { AutomationError, type ActionResult, type DriverConfig, type DriverSession, type EvidenceBundle, type PlatformCapabilities, type PlatformDriver, type PlatformSnapshot, type ResolvedElement, type SemanticSelector, type WaitCondition, type PlatformAction, type SnapshotNode } from '../contracts.js';
+import { AutomationError, validateAppIdentifier, type ActionResult, type DriverConfig, type DriverSession, type EvidenceBundle, type PlatformCapabilities, type PlatformDriver, type PlatformSnapshot, type ResolvedElement, type SemanticSelector, type WaitCondition, type PlatformAction, type SnapshotNode } from '../contracts.js';
 import { resolveSemanticSelector } from '../selectors.js';
 
 type AppiumValue<T> = { value: T };
@@ -23,7 +23,7 @@ export class AppiumXCUITestDriver implements PlatformDriver {
     const platformVersion = config.metadata?.platformVersion;
     const udid = config.metadata?.udid;
     const app = config.metadata?.appPath;
-    this.bundleId = config.appId;
+    this.bundleId = config.appId ? validateAppIdentifier(config.appId) : undefined;
     const capabilities: Record<string, unknown> = {
       platformName: 'iOS',
       'appium:automationName': 'XCUITest',
@@ -109,12 +109,14 @@ export class AppiumXCUITestDriver implements PlatformDriver {
       case 'launchApp': {
         const bundleId = action.appId ?? this.bundleId;
         if (!bundleId) throw new AutomationError('INVALID_SPEC', 'launchApp requires an iOS bundle id in the action or target configuration.');
+        validateAppIdentifier(bundleId);
         await this.request(`/session/${sid}/appium/device/activate_app`, { method: 'POST', body: JSON.stringify({ bundleId }), signal });
         break;
       }
       case 'terminateApp': {
         const bundleId = action.appId ?? this.bundleId;
         if (!bundleId) throw new AutomationError('INVALID_SPEC', 'terminateApp requires an iOS bundle id in the action or target configuration.');
+        validateAppIdentifier(bundleId);
         await this.request(`/session/${sid}/appium/device/terminate_app`, { method: 'POST', body: JSON.stringify({ bundleId }), signal });
         break;
       }
