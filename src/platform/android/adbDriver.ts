@@ -3,7 +3,7 @@ import { adbBackend } from '../../automation/adbBackend.js';
 import { runAdbShell } from '../../utils/adb.js';
 import type { AutomationBackend } from '../../automation/backend.js';
 import { parseUiHierarchy } from '../../automation/uiHierarchy.js';
-import { AutomationError, type DriverConfig, type DriverSession, type PlatformCapabilities, type PlatformDriver, type PlatformSnapshot, type ResolvedElement, type SemanticSelector, type WaitCondition, type ActionResult, type EvidenceBundle, type PlatformAction } from '../contracts.js';
+import { AutomationError, validateAppIdentifier, type DriverConfig, type DriverSession, type PlatformCapabilities, type PlatformDriver, type PlatformSnapshot, type ResolvedElement, type SemanticSelector, type WaitCondition, type ActionResult, type EvidenceBundle, type PlatformAction } from '../contracts.js';
 import { resolveSemanticSelector } from '../selectors.js';
 
 /** Native Android driver backed by the framework's existing ADB implementation. */
@@ -21,7 +21,7 @@ export class AndroidAdbDriver implements PlatformDriver {
     try {
       if (!(await this.backend.isAvailable(config.targetId))) throw new Error('ADB backend unavailable.');
       this.targetId = config.targetId;
-      this.appId = config.appId;
+      this.appId = config.appId ? validateAppIdentifier(config.appId) : undefined;
       this.session = { id: randomUUID(), platform: 'android', targetId: config.targetId, connectedAt: new Date().toISOString() };
       return this.session;
     } catch (error) {
@@ -110,12 +110,14 @@ export class AndroidAdbDriver implements PlatformDriver {
         case 'launchApp': {
           const appId = action.appId ?? this.appId;
           if (!appId) throw new AutomationError('INVALID_SPEC', 'launchApp requires an appId in the action or target configuration.');
+          validateAppIdentifier(appId);
           await runAdbShell(targetId, ['monkey', '-p', appId, '-c', 'android.intent.category.LAUNCHER', '1'], { timeoutMs: 15000 });
           break;
         }
         case 'terminateApp': {
           const appId = action.appId ?? this.appId;
           if (!appId) throw new AutomationError('INVALID_SPEC', 'terminateApp requires an appId in the action or target configuration.');
+          validateAppIdentifier(appId);
           await runAdbShell(targetId, ['am', 'force-stop', appId], { timeoutMs: 10000 });
           break;
         }
