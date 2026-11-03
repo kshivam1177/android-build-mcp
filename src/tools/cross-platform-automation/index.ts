@@ -5,6 +5,7 @@ import inspectCrossPlatformTarget from './inspect_cross_platform_target.js';
 import diagnoseCrossPlatformFailure from './diagnose_cross_platform_failure.js';
 import checkCrossPlatformRuntime from './check_cross_platform_runtime.js';
 import manageIosSimulator from './manage_ios_simulator.js';
+import manageCrossPlatformFleet from './manage_cross_platform_fleet.js';
 
 export const crossPlatformAutomationTools = [
   validateCrossPlatformTest,
@@ -13,6 +14,7 @@ export const crossPlatformAutomationTools = [
   inspectCrossPlatformTarget,
   diagnoseCrossPlatformFailure,
   checkCrossPlatformRuntime,
-  manageIosSimulator
+  manageIosSimulator,
+  manageCrossPlatformFleet
 ];
-export { validateCrossPlatformTest, runCrossPlatformTest, runCrossPlatformSuite, inspectCrossPlatformTarget, diagnoseCrossPlatformFailure, checkCrossPlatformRuntime, manageIosSimulator };
+export { validateCrossPlatformTest, runCrossPlatformTest, runCrossPlatformSuite, inspectCrossPlatformTarget, diagnoseCrossPlatformFailure, checkCrossPlatformRuntime, manageIosSimulator, manageCrossPlatformFleet };
