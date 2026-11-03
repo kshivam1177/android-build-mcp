@@ -73,7 +73,11 @@ export class FileDeviceFleet {
     return serialized(this.registryPath, async () => {
       const registry = await readJson(this.registryPath, registrySchema, { version: 1, targets: [] });
       const existing = registry.targets.findIndex((item) => item.id === target.id);
-      if (existing >= 0) registry.targets[existing] = target;
+      if (existing >= 0) {
+        const leases = await this.activeLeases();
+        if (leases.some((lease) => lease.targetId === target.id)) throw new Error('Cannot update a target while it has an active lease.');
+        registry.targets[existing] = target;
+      }
       else registry.targets.push(target);
       registry.targets.sort((a, b) => a.id.localeCompare(b.id));
       await atomicWrite(this.registryPath, registry);
@@ -104,9 +108,11 @@ export class FileDeviceFleet {
   async acquire(targetId: string, owner: string, ttlSeconds = 900): Promise<FleetLease> {
     if (!Number.isInteger(ttlSeconds) || ttlSeconds < 30 || ttlSeconds > 3600) throw new Error('Lease TTL must be between 30 and 3600 seconds.');
     if (!owner.trim() || owner.length > 128) throw new Error('Lease owner must contain 1–128 characters.');
-    const target = (await this.list()).find((item) => item.id === targetId);
-    if (!target || !target.enabled) throw new Error('Fleet target is missing or disabled: ' + targetId);
-    return serialized(this.leasesPath, async () => {
+    return serialized(this.registryPath, async () => {
+      const registry = await readJson(this.registryPath, registrySchema, { version: 1, targets: [] });
+      const target = registry.targets.find((item) => item.id === targetId);
+      if (!target || !target.enabled) throw new Error('Fleet target is missing or disabled: ' + targetId);
+      return serialized(this.leasesPath, async () => {
       const state = await readJson(this.leasesPath, leaseSchema, { version: 1, leases: [] });
       const now = Date.now();
       state.leases = state.leases.filter((lease) => Date.parse(lease.expiresAt) > now);
@@ -116,6 +122,7 @@ export class FileDeviceFleet {
       state.leases.push(lease);
       await atomicWrite(this.leasesPath, state);
       return lease;
+      });
     });
   }
 
