@@ -34,6 +34,9 @@ export class AutomationEngine {
     restartInterruptedPlatforms?: boolean;
     timeoutMs?: number;
   } = {}): Promise<AutomationRunResult> {
+    if (options.timeoutMs !== undefined && (!Number.isInteger(options.timeoutMs) || options.timeoutMs < 1 || options.timeoutMs > 3_600_000)) {
+      throw new AutomationError('INVALID_SPEC', 'Run timeout must be an integer between 1 and 3600000 milliseconds.');
+    }
     const controller = new AbortController();
     const relayAbort = () => controller.abort();
     if (options.signal?.aborted) controller.abort();
