@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { AutomationBackend } from '../../../automation/backend.js';
 import { AndroidAdbDriver } from '../adbDriver.js';
 import { runAdbShell } from '../../../utils/adb.js';
@@ -6,6 +6,8 @@ import { runAdbShell } from '../../../utils/adb.js';
 vi.mock('../../../utils/adb.js', () => ({
   runAdbShell: vi.fn(async () => ({ stdout: '', stderr: '', exitCode: 0, command: 'adb', durationMs: 0 }))
 }));
+
+beforeEach(() => vi.clearAllMocks());
 
 function backend(): AutomationBackend {
   return {
@@ -48,9 +50,20 @@ describe('AndroidAdbDriver', () => {
     const mock = backend();
     const driver = new AndroidAdbDriver(mock);
     await driver.connect({ platform: 'android', targetId: 'emulator-5554' });
+    vi.mocked(runAdbShell).mockResolvedValueOnce({ stdout: 'mInputShown=true', stderr: '', exitCode: 0, command: 'adb', durationMs: 1 });
     const result = await driver.perform({ type: 'hideKeyboard' });
     expect(result.dispatched).toBe(true);
     expect(mock.keyEvent).toHaveBeenCalledWith('emulator-5554', 'KEYCODE_BACK');
+    await driver.disconnect();
+  });
+
+  it('does not send BACK when Android reports that the keyboard is hidden', async () => {
+    const mock = backend();
+    const driver = new AndroidAdbDriver(mock);
+    await driver.connect({ platform: 'android', targetId: 'emulator-5554' });
+    const result = await driver.perform({ type: 'hideKeyboard' });
+    expect(result.dispatched).toBe(false);
+    expect(mock.keyEvent).not.toHaveBeenCalled();
     await driver.disconnect();
   });
 
