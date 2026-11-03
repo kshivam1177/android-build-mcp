@@ -81,13 +81,13 @@ export function register(server: McpServer) {
       '- Run: ' + result.runId,
       '- Result: ' + (result.success ? 'PASSED' : result.timedOut ? 'TIMED OUT' : result.cancelled ? 'CANCELLED' : 'FAILED'),
       '- Duration: ' + result.durationMs + ' ms',
-      '- Platforms: ' + result.summary.passedPlatforms + '/' + result.summary.totalPlatforms + ' passed',
+      '- Platforms: ' + result.summary.passedPlatforms + ' passed; ' + result.summary.failedPlatforms + ' failed; ' + result.summary.cancelledPlatforms + ' cancelled',
       '- Steps: ' + result.summary.totalSteps + ' total; ' + result.summary.failedSteps + ' failed; ' + result.summary.retriedSteps + ' retried',
       '- Attempts: ' + result.summary.totalAttempts, '',
       '## Platform results', ''
     ];
     for (const platform of reportResult.platforms) {
-      lines.push('### ' + platform.platform + ': ' + (platform.success ? 'PASSED' : 'FAILED'));
+      lines.push('### ' + platform.platform + ': ' + (platform.status === 'cancelled' ? 'CANCELLED' : platform.success ? 'PASSED' : 'FAILED'));
       lines.push('- Duration: ' + platform.durationMs + ' ms');
       if (platform.error) lines.push('- Error: ' + platform.error);
       if (platform.evidence && 'screenshotPath' in platform.evidence && platform.evidence.screenshotPath) lines.push('- Screenshot evidence: ' + path.basename(String(platform.evidence.screenshotPath)));
@@ -102,7 +102,7 @@ export function register(server: McpServer) {
     const summary = {
       success: result.success, cancelled: result.cancelled, timedOut: result.timedOut, testId: result.testId, runId: result.runId,
       summary: result.summary,
-      platforms: reportResult.platforms.map((platform) => ({ platform: platform.platform, success: platform.success, durationMs: platform.durationMs, error: platform.error, evidence: platform.evidence ? true : false })),
+      platforms: reportResult.platforms.map((platform) => ({ platform: platform.platform, status: platform.status ?? (platform.success ? 'passed' : 'failed'), success: platform.success, durationMs: platform.durationMs, error: platform.error, evidence: platform.evidence ? true : false })),
       reportDirectory, jsonReport: jsonPath, markdownReport: markdownPath, junitReport: junitPath
     };
     return textResult(JSON.stringify(summary, null, 2), summary);
