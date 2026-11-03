@@ -87,10 +87,12 @@ export class AppiumXCUITestDriver implements PlatformDriver {
         const elementId = await this.findElement(action.selector, signal);
         if (action.type === 'tap') await this.request(`/session/${sid}/element/${elementId}/click`, { method: 'POST', body: '{}' , signal });
         else if (action.type === 'type') {
-          await this.request(`/session/${sid}/element/${elementId}/clear`, { method: 'POST', body: '{}', signal });
+          if (action.clearFirst !== false) await this.request(`/session/${sid}/element/${elementId}/clear`, { method: 'POST', body: '{}', signal });
           await this.request(`/session/${sid}/element/${elementId}/value`, { method: 'POST', body: JSON.stringify({ text: action.text, value: [...action.text] }), signal });
         } else {
-          await this.request(`/session/${sid}/execute/sync`, { method: 'POST', body: JSON.stringify({ script: 'mobile: touchAndHold', args: [{ x: 0, y: 0, duration: action.durationMs ?? 800 }] }), signal });
+          const rect = await this.request<AppiumValue<{ x: number; y: number; width: number; height: number }>>(`/session/${sid}/element/${elementId}/rect`, { signal });
+          const x = rect.value.x + rect.value.width / 2; const y = rect.value.y + rect.value.height / 2;
+          await this.request(`/session/${sid}/execute/sync`, { method: 'POST', body: JSON.stringify({ script: 'mobile: touchAndHold', args: [{ x, y, duration: (action.durationMs ?? 800) / 1000 }] }), signal });
         }
         break;
       }
@@ -153,6 +155,7 @@ export class AppiumXCUITestDriver implements PlatformDriver {
   }
 
   private async request<T = unknown>(endpoint: string, options: { method?: string; body?: string; signal?: AbortSignal } = {}): Promise<T> {
+    if (options.signal?.aborted) throw new AutomationError('CANCELLED', 'Appium request cancelled.');
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), this.timeoutMs);
     const abort = () => controller.abort();
@@ -179,8 +182,8 @@ function decodeXml(value: string): string { return value.replace(/&quot;/g, '"')
 function delay(ms: number, signal?: AbortSignal): Promise<void> {
   if (signal?.aborted) return Promise.reject(new AutomationError('CANCELLED', 'iOS wait cancelled.'));
   return new Promise((resolve, reject) => {
-    const timer = setTimeout(resolve, ms);
-    const abort = () => { clearTimeout(timer); reject(new AutomationError('CANCELLED', 'iOS wait cancelled.')); };
+    const timer = setTimeout(() => { signal?.removeEventListener('abort', abort); resolve(); }, ms);
+    const abort = () => { clearTimeout(timer); signal?.removeEventListener('abort', abort); reject(new AutomationError('CANCELLED', 'iOS wait cancelled.')); };
     signal?.addEventListener('abort', abort, { once: true });
   });
 }
