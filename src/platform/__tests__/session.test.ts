@@ -1,11 +1,11 @@
 import { describe, expect, it, vi } from 'vitest';
 import { DriverSessionManager } from '../session.js';
-import { AutomationError, type PlatformDriver } from '../contracts.js';
+import { AutomationError, type DriverConfig, type PlatformDriver } from '../contracts.js';
 
 function driver() {
   return {
     platform: 'web' as const,
-    connect: vi.fn(async (config) => ({ id: 'session-' + (config.targetId ?? 'default'), platform: 'web' as const, targetId: config.targetId ?? 'default', connectedAt: new Date().toISOString() })),
+    connect: vi.fn(async (config: DriverConfig) => ({ id: 'session-' + (config.targetId ?? 'default'), platform: 'web' as const, targetId: config.targetId ?? 'default', connectedAt: new Date().toISOString() })),
     disconnect: vi.fn(async () => undefined)
   } as unknown as PlatformDriver;
 }
