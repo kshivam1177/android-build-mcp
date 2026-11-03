@@ -146,3 +146,11 @@ export class AutomationError extends Error {
     this.name = 'AutomationError';
   }
 }
+
+/** Package/bundle identifiers are passed to native command bridges; reject shell metacharacters and malformed identifiers. */
+export function validateAppIdentifier(value: string): string {
+  if (!/^[A-Za-z_][A-Za-z0-9_]*(?:\.[A-Za-z_][A-Za-z0-9_]*)+$/.test(value)) {
+    throw new AutomationError('INVALID_SPEC', 'App identifier must be a dotted package/bundle identifier.');
+  }
+  return value;
+}
