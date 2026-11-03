@@ -87,7 +87,7 @@ export class AppiumXCUITestDriver implements PlatformDriver {
         const elementId = await this.findElement(action.selector, signal);
         if (action.type === 'tap') await this.request(`/session/${sid}/element/${elementId}/click`, { method: 'POST', body: '{}' , signal });
         else if (action.type === 'type') {
-          if (action.clearFirst !== false) await this.request(`/session/${sid}/element/${elementId}/clear`, { method: 'POST', body: '{}', signal });
+          if (action.clearFirst === true) await this.request(`/session/${sid}/element/${elementId}/clear`, { method: 'POST', body: '{}', signal });
           await this.request(`/session/${sid}/element/${elementId}/value`, { method: 'POST', body: JSON.stringify({ text: action.text, value: [...action.text] }), signal });
         } else {
           const rect = await this.request<AppiumValue<{ x: number; y: number; width: number; height: number }>>(`/session/${sid}/element/${elementId}/rect`, { signal });
