@@ -112,3 +112,4 @@ Generated from the registered MCP tool list. Run npm run docs:generate to refres
 | ui-automation | type_text |
 | ui-automation | wait_for_ui |
 | workflow-discovery | manage_workflows |
+| cross-platform-automation | check_cross_platform_runtime |
