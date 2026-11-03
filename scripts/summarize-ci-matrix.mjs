@@ -40,7 +40,7 @@ const lines = [
   '| **Total** | **' + totals.tests + '** | **' + totals.failures + '** | **' + totals.errors + '** | **' + totals.skipped + '** |',
   ''
 ];
-if (reports.length === 0) lines.splice(3, 0, 'No JUnit reports were available. Check the matrix job logs and artifact upload steps.', '');
+if (reports.length === 0) lines.splice(2, 0, 'No JUnit reports were available. Check the matrix job logs and artifact upload steps.', '');
 const output = lines.join('\n');
 if (process.env.GITHUB_STEP_SUMMARY) await fs.appendFile(process.env.GITHUB_STEP_SUMMARY, output + '\n');
 process.stdout.write(output);
