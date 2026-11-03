@@ -12,7 +12,7 @@ export const workflow = 'cross-platform-automation';
 const datePattern = /^\d{4}-\d{2}-\d{2}$/;
 const runPattern = /^\d{2}-\d{2}-\d{2}-cross-platform-suite-[a-f0-9]{8}$/i;
 
-async function findExpiredReports(reportsRoot: string, retentionDays: number) {
+export async function findExpiredReports(reportsRoot: string, retentionDays: number) {
   const cutoff = Date.now() - retentionDays * 24 * 60 * 60 * 1000;
   const candidates: string[] = [];
   let dates: string[];
