@@ -85,7 +85,7 @@ export const WORKFLOWS: WorkflowDefinition[] = [
   },
   {
     name: 'cross-platform-automation',
-    description: 'Cross-platform test validation and execution, target inspection, deterministic UI assertions and state classification, failure diagnosis, optional AI assistance contracts, and JSON/Markdown/JUnit reporting across Android, Flutter, iOS and Web.',
+    description: 'Cross-platform runtime preflight, test validation and execution, target inspection, deterministic UI assertions and state classification, failure diagnosis, optional AI assistance contracts, and JSON/Markdown/JUnit reporting across Android, Flutter, iOS and Web.',
     defaultEnabled: false,
     tools: crossPlatformAutomationTools,
   },
