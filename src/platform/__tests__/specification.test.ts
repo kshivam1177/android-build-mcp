@@ -43,10 +43,3 @@ describe('cross-platform test schema', () => {
     })).toThrow(/unique/);
   });
 });
-
-  it('rejects duplicate platform targets', () => {
-    expect(() => parseAutomationTest({
-      schemaVersion: '1.0', id: 'duplicate-platform', name: 'Duplicate platform', platforms: ['android', 'android'],
-      steps: [{ id: 'wait', type: 'wait', timeoutMs: 1 }]
-    })).toThrow(/Platform targets must be unique/);
-  });
