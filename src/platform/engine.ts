@@ -146,11 +146,12 @@ export class AutomationEngine {
           steps.push({ id: step.id, type: step.type, status: 'passed', durationMs: Date.now() - stepStarted, attempts });
           this.options.onStep?.({ runId, platform, stepId: step.id, status: 'passed' });
         } catch (error) {
+          if (signal?.aborted) throw new AutomationError('CANCELLED', 'Test run was cancelled.');
           const message = error instanceof Error ? error.message : String(error);
           steps.push({ id: step.id, type: step.type, status: 'failed', durationMs: Date.now() - stepStarted, attempts, error: redact(message, variables) });
           this.options.onStep?.({ runId, platform, stepId: step.id, status: 'failed' }); platformError = message;
           try {
-            const captured = await driver.captureEvidence();
+            const captured = await driver.captureEvidence(signal);
             evidence = { capturedAt: captured.capturedAt, ...(captured.screenshot ? { screenshot: { mimeType: captured.screenshot.mimeType, base64: captured.screenshot.data.toString('base64') } } : {}), ...(captured.snapshot ? { snapshot: captured.snapshot } : {}) };
           } catch { /* Preserve the original step failure if evidence capture also fails. */ }
           break;
