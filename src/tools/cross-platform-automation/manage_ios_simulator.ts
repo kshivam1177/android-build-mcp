@@ -13,7 +13,7 @@ export function register(server: McpServer) {
     description: 'List available iOS simulators or explicitly boot/shut down a selected simulator. Requires macOS and Xcode. Does not erase simulator data.',
     inputSchema: {
       action: z.enum(['list', 'boot', 'shutdown']),
-      udid: z.string().optional().describe('Required for boot and shutdown; use a UDID returned by list.')
+      udid: z.string().regex(/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/).optional().describe('Required for boot and shutdown; use a UDID returned by list.')
     },
     annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: true }
   }, withErrorHandling(async (args: { action: 'list' | 'boot' | 'shutdown'; udid?: string }) => {
