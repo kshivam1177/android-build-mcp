@@ -1,6 +1,6 @@
 {
   "name": "androidmcp-framework",
-  "version": "0.1.49",
+  "version": "0.1.50",
   "description": "A Model Context Protocol (MCP) server and CLI that gives coding agents tools for Android development: emulator + physical device builds, installs, UI automation, logs, coverage and testing intelligence.",
   "type": "module",
   "license": "MIT",
