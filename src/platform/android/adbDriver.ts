@@ -119,8 +119,10 @@ export class AndroidAdbDriver implements PlatformDriver {
       const snapshot = await this.snapshot(signal);
       if (condition.kind === 'url') throw new AutomationError('UNSUPPORTED_CAPABILITY', 'URL wait is not available on Android.');
       try {
-        const element = resolveSemanticSelector(snapshot, condition.selector);
-        if (condition.kind !== 'absent' &&
+        const element = resolveSemanticSelector(snapshot, condition.selector, { allowDisabled: true });
+        if (condition.kind === 'visible' && element.node.visible !== false) return snapshot;
+        if (condition.kind === 'absent' && element.node.visible === false) return snapshot;
+        if (condition.kind === 'text' && element.node.visible !== false &&
           (condition.kind !== 'text' ||
             (condition.equals !== undefined ? element.node.text === condition.equals :
               condition.contains !== undefined ? (element.node.text ?? '').includes(condition.contains) : true))) return snapshot;
