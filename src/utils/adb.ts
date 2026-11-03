@@ -26,7 +26,7 @@ export async function runAdb(args: string[], options: Pick<ExecOptions, 'timeout
 export async function runAdbForTarget(
   targetId: string,
   args: string[],
-  options: Pick<ExecOptions, 'timeoutMs' | 'cwd'> = {}
+  options: Pick<ExecOptions, 'timeoutMs' | 'cwd' | 'signal'> = {}
 ) {
   return runAdb(['-s', targetId, ...args], options);
 }
