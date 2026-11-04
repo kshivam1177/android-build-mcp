@@ -43,5 +43,5 @@ describe('RemoteWorkerCoordinator', () => {
     const { coordinator, credential } = await setup();
     await new Promise((resolve) => setTimeout(resolve, 5100));
     await expect(coordinator.claimNext(credential.workerId, credential.token)).rejects.toThrow('heartbeat expired');
-  });
+  }, 10_000);
 });
