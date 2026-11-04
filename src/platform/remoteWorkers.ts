@@ -144,3 +144,58 @@ export class RemoteWorkerCoordinator {
   }
   async listJobs(): Promise<RemoteJob[]> { return this.store.getJobs(); }
 }
+
+export interface RemoteWorkerTransport {
+  heartbeat(workerId: string, token: string): Promise<{ accepted: true; cancelJobIds: string[] }>;
+  claimNext(workerId: string, token: string): Promise<RemoteJob | null>;
+  start(workerId: string, token: string, jobId: string): Promise<RemoteJob>;
+  finish(workerId: string, token: string, jobId: string, result: { success: boolean; error?: string; evidence?: { manifestSha256: string; artifactCount: number; totalBytes: number } }): Promise<RemoteJob>;
+}
+export type RemoteJobExecutor = (job: RemoteJob, signal: AbortSignal) => Promise<{ success: boolean; error?: string; evidence?: { manifestSha256: string; artifactCount: number; totalBytes: number } }>;
+function delay(ms: number, signal: AbortSignal): Promise<void> {
+  if (signal.aborted) return Promise.resolve();
+  return new Promise((resolve) => {
+    const timer = setTimeout(done, ms);
+    function done() { clearTimeout(timer); signal.removeEventListener('abort', done); resolve(); }
+    signal.addEventListener('abort', done, { once: true });
+  });
+}
+
+/** Pull-based worker loop. The transport is expected to use authenticated TLS. */
+export class RemoteWorkerAgent {
+  private readonly controllers = new Map<string, AbortController>();
+  private readonly executions = new Map<string, Promise<void>>();
+  constructor(
+    private readonly workerId: string,
+    private readonly token: string,
+    private readonly capacity: number,
+    private readonly transport: RemoteWorkerTransport,
+    private readonly execute: RemoteJobExecutor
+  ) {
+    if (!workerId || !token || !Number.isInteger(capacity) || capacity < 1 || capacity > 32) throw new Error('Remote worker agent configuration is invalid.');
+  }
+
+  async run(signal: AbortSignal, pollIntervalMs = 1000): Promise<void> {
+    if (!Number.isInteger(pollIntervalMs) || pollIntervalMs < 100 || pollIntervalMs > 60_000) throw new Error('Worker poll interval must be between 100 and 60000 ms.');
+    while (!signal.aborted) {
+      const heartbeat = await this.transport.heartbeat(this.workerId, this.token);
+      for (const jobId of heartbeat.cancelJobIds) this.controllers.get(jobId)?.abort(new Error('Remote job cancellation requested.'));
+      while (!signal.aborted && this.executions.size < this.capacity) {
+        const job = await this.transport.claimNext(this.workerId, this.token);
+        if (!job) break;
+        await this.transport.start(this.workerId, this.token, job.id);
+        const controller = new AbortController();
+        this.controllers.set(job.id, controller);
+        const execution = this.execute(job, controller.signal)
+          .then((result) => this.transport.finish(this.workerId, this.token, job.id, result))
+          .catch((error: unknown) => this.transport.finish(this.workerId, this.token, job.id, { success: false, error: error instanceof Error ? error.message : String(error) }))
+          .then(() => undefined)
+          .finally(() => { this.controllers.delete(job.id); this.executions.delete(job.id); });
+        this.executions.set(job.id, execution);
+      }
+      if (!signal.aborted) await delay(pollIntervalMs, signal);
+    }
+    for (const controller of this.controllers.values()) controller.abort(new Error('Remote worker is shutting down.'));
+    await Promise.allSettled(this.executions.values());
+  }
+}
