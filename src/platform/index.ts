@@ -17,5 +17,6 @@ export * from './drivers.js';
 export * from './preflight.js';
 export * from './ios/simulator.js';
 
+export * from './remoteWorkers.js';
 export * from './orchestration.js';
 export * from './checkpoint.js';
