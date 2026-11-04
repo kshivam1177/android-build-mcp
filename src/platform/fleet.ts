@@ -40,7 +40,7 @@ async function serialized<T>(key: string, work: () => Promise<T>): Promise<T> {
   finally { release(); if (queues.get(key) === tail) queues.delete(key); }
 }
 
-async function readJson<T>(file: string, schema: z.ZodType<T>, fallback: T): Promise<T> {
+async function readJson<T>(file: string, schema: { parse(data: unknown): T }, fallback: T): Promise<T> {
   try { return schema.parse(JSON.parse(await fs.readFile(file, 'utf8'))); }
   catch (error) {
     if ((error as NodeJS.ErrnoException).code === 'ENOENT') return fallback;
