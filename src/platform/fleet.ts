@@ -72,7 +72,7 @@ export class FileDeviceFleet {
   async register(input: Omit<FleetTarget, 'updatedAt'>): Promise<FleetTarget> {
     const target: FleetTarget = targetSchema.parse({ ...input, updatedAt: new Date().toISOString() });
     return serialized(this.registryPath, async () => {
-      const registry = await readJson(this.registryPath, registrySchema, { version: 1, targets: [] });
+      const registry = await readJson<FleetRegistry>(this.registryPath, registrySchema, { version: 1, targets: [] });
       const existing = registry.targets.findIndex((item) => item.id === target.id);
       if (existing >= 0) {
         const leases = await this.activeLeases();
@@ -88,7 +88,7 @@ export class FileDeviceFleet {
 
   async remove(id: string): Promise<void> {
     await serialized(this.registryPath, async () => {
-      const registry = await readJson(this.registryPath, registrySchema, { version: 1, targets: [] });
+      const registry = await readJson<FleetRegistry>(this.registryPath, registrySchema, { version: 1, targets: [] });
       if (!registry.targets.some((target) => target.id === id)) throw new Error('Fleet target not found: ' + id);
       const leases = await this.activeLeases();
       if (leases.some((lease) => lease.targetId === id)) throw new Error('Cannot remove a target while it has an active lease.');
@@ -110,7 +110,7 @@ export class FileDeviceFleet {
     if (!Number.isInteger(ttlSeconds) || ttlSeconds < 30 || ttlSeconds > 3600) throw new Error('Lease TTL must be between 30 and 3600 seconds.');
     if (!owner.trim() || owner.length > 128) throw new Error('Lease owner must contain 1–128 characters.');
     return serialized(this.registryPath, async () => {
-      const registry = await readJson(this.registryPath, registrySchema, { version: 1, targets: [] });
+      const registry = await readJson<FleetRegistry>(this.registryPath, registrySchema, { version: 1, targets: [] });
       const target = registry.targets.find((item) => item.id === targetId);
       if (!target || !target.enabled) throw new Error('Fleet target is missing or disabled: ' + targetId);
       return serialized(this.leasesPath, async () => {
