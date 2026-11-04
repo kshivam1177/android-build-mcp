@@ -9,6 +9,8 @@
 - Capability-aware pull scheduling and explicit queued → assigned → running → terminal transitions.
 - Cancellation requests are delivered to running workers on their next heartbeat.
 - Evidence completion metadata includes a SHA-256 manifest digest, artifact count and total bytes.
+- Pull-based `RemoteWorkerAgent` runtime with bounded concurrency, heartbeat polling, cancellation signals, graceful shutdown and result reporting.
+- Transport interface isolates the worker loop from its deployment-specific authenticated TLS client.
 - An injectable store interface and serialized in-process coordinator mutations.
 
 ## Deployment boundary
