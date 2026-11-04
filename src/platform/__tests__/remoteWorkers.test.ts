@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { InMemoryRemoteWorkerStore, RemoteWorkerCoordinator, type RemoteJobRequest } from '../remoteWorkers.js';
+import { InMemoryRemoteWorkerStore, RemoteWorkerAgent, RemoteWorkerCoordinator, type RemoteJob, type RemoteJobRequest, type RemoteWorkerTransport } from '../remoteWorkers.js';
 const digest = 'a'.repeat(64);
 const request = (overrides: Partial<RemoteJobRequest> = {}): RemoteJobRequest => ({ runId: 'run-1', suiteId: 'smoke', platform: 'android', requiredLabels: ['pixel'], definitionDigest: digest, definition: { steps: [{ action: 'launch' }] }, timeoutMs: 60000, ...overrides });
 async function setup() {
@@ -44,4 +44,25 @@ describe('RemoteWorkerCoordinator', () => {
     await new Promise((resolve) => setTimeout(resolve, 5100));
     await expect(coordinator.claimNext(credential.workerId, credential.token)).rejects.toThrow('heartbeat expired');
   }, 10_000);
+});
+
+describe('RemoteWorkerAgent', () => {
+  it('polls, executes and reports a claimed job', async () => {
+    const job: RemoteJob = { id: 'job-1', request: request(), state: 'assigned', workerId: 'worker', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
+    let claims = 0, finished = 0;
+    const transport: RemoteWorkerTransport = {
+      heartbeat: async () => ({ accepted: true, cancelJobIds: [] }),
+      claimNext: async () => claims++ === 0 ? job : null,
+      start: async () => ({ ...job, state: 'running' }),
+      finish: async (_worker, _token, _id, result) => { finished++; expect(result.success).toBe(true); return { ...job, state: 'succeeded' }; }
+    };
+    const agent = new RemoteWorkerAgent('worker', 'secret', 1, transport, async () => ({ success: true }));
+    const controller = new AbortController();
+    const running = agent.run(controller.signal, 100);
+    await new Promise((resolve) => setTimeout(resolve, 150));
+    controller.abort();
+    await running;
+    expect(claims).toBeGreaterThan(0);
+    expect(finished).toBe(1);
+  });
 });
