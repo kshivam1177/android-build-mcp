@@ -37,7 +37,7 @@ describe('RemoteWorkerCoordinator', () => {
     const { coordinator, credential } = await setup(), job = await coordinator.enqueue(request());
     await coordinator.claimNext(credential.workerId, credential.token); await coordinator.start(credential.workerId, credential.token, job.id);
     await expect(coordinator.finish(credential.workerId, credential.token, job.id, { success: true, evidence: { manifestSha256: 'bad', artifactCount: 1, totalBytes: 1 } })).rejects.toThrow('evidence summary');
-    expect(await coordinator.finish(credential.workerId, credential.token, job.id, { success: true, evidence: { manifestSha256: digest, artifactCount: 4, totalBytes: 1024 } })).resolves.toMatchObject({ state: 'succeeded', evidence: { artifactCount: 4, totalBytes: 1024 } });
+    await expect(coordinator.finish(credential.workerId, credential.token, job.id, { success: true, evidence: { manifestSha256: digest, artifactCount: 4, totalBytes: 1024 } })).resolves.toMatchObject({ state: 'succeeded', evidence: { artifactCount: 4, totalBytes: 1024 } });
   });
   it('does not permit claims after a worker heartbeat expires', async () => {
     const { coordinator, credential } = await setup();
