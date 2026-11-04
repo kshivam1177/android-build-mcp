@@ -25,6 +25,7 @@ const leaseSchema = z.object({
   }))
 });
 export type FleetTarget = z.infer<typeof targetSchema>;
+type FleetRegistry = { version: 1; targets: FleetTarget[] };
 export type FleetLease = z.infer<typeof leaseSchema>['leases'][number];
 
 const queues = new Map<string, Promise<unknown>>();
@@ -65,7 +66,7 @@ export class FileDeviceFleet {
   }
 
   async list(): Promise<FleetTarget[]> {
-    return (await readJson(this.registryPath, registrySchema, { version: 1, targets: [] })).targets;
+    return (await readJson<FleetRegistry>(this.registryPath, registrySchema, { version: 1, targets: [] })).targets;
   }
 
   async register(input: Omit<FleetTarget, 'updatedAt'>): Promise<FleetTarget> {
