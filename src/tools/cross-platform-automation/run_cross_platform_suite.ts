@@ -1,6 +1,6 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { AutomationEngine } from '../../platform/engine.js';
@@ -10,6 +10,7 @@ import { parseAutomationTest } from '../../platform/specification.js';
 import { evaluateCrossPlatformSuiteGate } from '../../platform/suite.js';
 import { toJunitXml } from '../../platform/reporting/junit.js';
 import { redactSensitiveText } from '../../platform/reporting/redaction.js';
+import { createEvidenceManifest } from '../../platform/reporting/evidenceManifest.js';
 import { execCommand } from '../../utils/exec.js';
 import { resolveProjectRoot } from '../../utils/paths.js';
 import { withErrorHandling, textResult } from '../../utils/response.js';
@@ -43,15 +44,20 @@ async function loadDefinitions(directory: string) {
     if ((error as NodeJS.ErrnoException).code === 'ENOENT') return [];
     throw error;
   }
-  const definitions: Array<{ file: string; definition: ReturnType<typeof parseAutomationTest> }> = [];
+  const definitions: Array<{ file: string; definition: ReturnType<typeof parseAutomationTest>; sha256: string }> = [];
   const ids = new Set<string>();
   for (const name of names) {
-    const definition = parseAutomationTest(JSON.parse(await fs.readFile(path.join(directory, name), 'utf8')));
+    const raw = await fs.readFile(path.join(directory, name));
+    const definition = parseAutomationTest(JSON.parse(raw.toString('utf8')));
     if (ids.has(definition.id)) throw new Error('Duplicate cross-platform test ID "' + definition.id + '" in saved suite.');
     ids.add(definition.id);
-    definitions.push({ file: name, definition });
+    definitions.push({ file: name, definition, sha256: createHash('sha256').update(raw).digest('hex') });
   }
   return definitions;
+}
+
+function definitionManifest(items: Array<{ file: string; sha256: string }>): string {
+  return createHash('sha256').update(items.map((item) => item.file + ':' + item.sha256).sort().join('\\n')).digest('hex');
 }
 
 export function register(server: McpServer) {
@@ -78,12 +84,13 @@ export function register(server: McpServer) {
     const missing = (args.testIds ?? []).filter((id) => !definitions.some((item) => item.definition.id === id));
     if (missing.length) throw new Error('Requested cross-platform test IDs were not found: ' + missing.join(', '));
     const state = await gitState(root);
+    const definitionManifestSha256 = definitionManifest(selected);
     const runId = randomUUID();
     const now = new Date();
     const reportDirectory = path.join(root, '.androidmcp-framework', 'test-reports', now.toISOString().slice(0, 10), now.toISOString().slice(11, 19).replace(/:/g, '-') + '-cross-platform-suite-' + runId.slice(0, 8));
     const plan = selected.map(({ file, definition }) => ({ file, id: definition.id, name: definition.name, platforms: definition.platforms, steps: definition.steps.length, targets: definition.targets ?? {} }));
     if (!args.execute) {
-      const preview = { mode: 'plan-only', runId, projectRoot: root, suiteDirectory: relative, definitionCount: selected.length, plan, gitHeadSha: state.gitHeadSha, workingTreeClean: state.workingTreeClean, executionRequires: 'Review every test definition and target, then set execute=true.' };
+      const preview = { mode: 'plan-only', runId, projectRoot: root, suiteDirectory: relative, definitionCount: selected.length, plan, definitionManifestSha256, definitionFiles: selected.map(({ file, sha256 }) => ({ file, sha256 })), gitHeadSha: state.gitHeadSha, workingTreeClean: state.workingTreeClean, executionRequires: 'Review every test definition and target, then set execute=true.' };
       return textResult(JSON.stringify(preview, null, 2), preview);
     }
     if (!selected.length) throw new Error('No saved cross-platform test definitions were selected; an empty suite cannot pass.');
@@ -132,13 +139,20 @@ export function register(server: McpServer) {
         if (args.stopOnFailure) break;
       }
     }
-    const gate = evaluateCrossPlatformSuiteGate({ outcomes, gitHeadSha: state.gitHeadSha, workingTreeClean: state.workingTreeClean, selectedCount: selected.length });
+    const finalState = await gitState(root);
+    const sourceRevisionUnchanged = state.gitHeadSha !== null && state.gitHeadSha === finalState.gitHeadSha;
+    const workspaceCleanThroughout = state.workingTreeClean === true && finalState.workingTreeClean === true;
+    const definitionsUnchanged = (await Promise.all(selected.map(async (item) => {
+      try { return createHash('sha256').update(await fs.readFile(path.join(suiteDirectory, item.file))).digest('hex') === item.sha256; }
+      catch { return false; }
+    }))).every(Boolean);
+    const gate = evaluateCrossPlatformSuiteGate({ outcomes, gitHeadSha: sourceRevisionUnchanged ? finalState.gitHeadSha : null, workingTreeClean: workspaceCleanThroughout, selectedCount: selected.length, definitionManifestSha256, definitionsUnchanged });
     const secrets = selected.flatMap(({ definition }) => Object.values(definition.variables ?? {}).filter((value): value is string => typeof value === 'string'));
-    const report = { schemaVersion: 1, runId, generatedAt: new Date().toISOString(), projectRoot: root, suiteDirectory: relative, gitHeadSha: state.gitHeadSha, workingTreeClean: state.workingTreeClean, gate, selectedCount: selected.length, executedCount: outcomes.length, outcomes };
+    const report = { schemaVersion: 1, runId, generatedAt: new Date().toISOString(), projectRoot: root, suiteDirectory: relative, gitHeadSha: finalState.gitHeadSha, workingTreeClean: workspaceCleanThroughout, sourceRevisionUnchanged, definitionManifestSha256, definitionsUnchanged, definitionFiles: selected.map(({ file, sha256 }) => ({ file, sha256 })), gate, selectedCount: selected.length, executedCount: outcomes.length, outcomes };
     const jsonPath = path.join(reportDirectory, 'cross-platform-suite.json');
     const markdownPath = path.join(reportDirectory, 'cross-platform-suite.md');
     const junitPath = path.join(reportDirectory, 'junit.xml');
-    const lines = ['# Cross-platform suite report', '', '- Run: ' + runId, '- Decision: ' + gate.decision, '- Git HEAD: ' + (state.gitHeadSha ?? 'unavailable'), '- Working tree clean: ' + String(state.workingTreeClean), '- Definitions: ' + gate.passed + ' passed; ' + gate.failed + ' failed; ' + gate.incomplete + ' incomplete', '- Executed: ' + outcomes.length + ' / ' + selected.length, '', '## Test results', ''];
+    const lines = ['# Cross-platform suite report', '', '- Run: ' + runId, '- Decision: ' + gate.decision, '- Git HEAD: ' + (finalState.gitHeadSha ?? 'unavailable'), '- Source revision unchanged: ' + String(sourceRevisionUnchanged), '- Working tree clean throughout: ' + String(workspaceCleanThroughout), '- Definition manifest SHA-256: ' + definitionManifestSha256, '- Definitions unchanged: ' + String(definitionsUnchanged), '- Definitions: ' + gate.passed + ' passed; ' + gate.failed + ' failed; ' + gate.incomplete + ' incomplete', '- Executed: ' + outcomes.length + ' / ' + selected.length, '', '## Test results', ''];
     for (const outcome of outcomes) lines.push('### ' + outcome.id + ' — ' + (outcome.success ? 'PASSED' : 'FAILED'), '', '- Definition: ' + outcome.file, '- Duration: ' + outcome.durationMs + ' ms', ...(outcome.error ? ['- Error: ' + outcome.error] : []), '');
     lines.push('## Gate rationale', '', gate.reason, '');
     await Promise.all([
@@ -146,7 +160,9 @@ export function register(server: McpServer) {
       fs.writeFile(markdownPath, redactSensitiveText(lines.join('\n'), secrets), 'utf8'),
       fs.writeFile(junitPath, redactSensitiveText('<?xml version="1.0" encoding="UTF-8"?>\n<testsuites>\n' + junitSuites.join('\n') + '\n</testsuites>\n', secrets), 'utf8')
     ]);
-    const response = { runId, gate, selectedCount: selected.length, executedCount: outcomes.length, reportDirectory, jsonReport: jsonPath, markdownReport: markdownPath, junitReport: junitPath, outcomes: outcomes.map(({ id, name, success, durationMs, error }) => ({ id, name, success, durationMs, error })) };
+    const evidenceManifest = await createEvidenceManifest({ reportDirectory, runId, gitHeadSha: sourceRevisionUnchanged ? finalState.gitHeadSha : null, definitionManifestSha256 });
+    const evidenceManifestPath = path.join(reportDirectory, 'evidence-manifest.json');
+    const response = { runId, gate, selectedCount: selected.length, executedCount: outcomes.length, reportDirectory, jsonReport: jsonPath, markdownReport: markdownPath, junitReport: junitPath, evidenceManifest: evidenceManifestPath, evidenceArtifactCount: evidenceManifest.artifacts.length, outcomes: outcomes.map(({ id, name, success, durationMs, error }) => ({ id, name, success, durationMs, error })) };
     return textResult(JSON.stringify(response, null, 2), response);
   }));
 }

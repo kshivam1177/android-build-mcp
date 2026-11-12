@@ -15,6 +15,8 @@ export function evaluateCrossPlatformSuiteGate(input: {
   gitHeadSha: string | null;
   workingTreeClean: boolean | null;
   selectedCount: number;
+  definitionManifestSha256: string | null;
+  definitionsUnchanged: boolean | null;
 }): { decision: CrossPlatformSuiteDecision; reason: string; passed: number; failed: number; incomplete: number; total: number } {
   const passed = input.outcomes.filter((outcome) => outcome.success && !outcome.cancelled && !outcome.timedOut).length;
   const failed = input.outcomes.filter((outcome) => !outcome.success && !outcome.cancelled && !outcome.timedOut).length;
@@ -24,7 +26,9 @@ export function evaluateCrossPlatformSuiteGate(input: {
   if (input.outcomes.length !== input.selectedCount || incomplete > 0) return { decision: 'incomplete', reason: 'Some selected definitions did not complete with an explicit passing result.', passed, failed, incomplete: incomplete + Math.max(0, input.selectedCount - input.outcomes.length), total: input.selectedCount };
   if (!input.gitHeadSha) return { decision: 'incomplete', reason: 'Git HEAD provenance is unavailable; results cannot be bound to a source revision.', passed, failed, incomplete, total: input.selectedCount };
   if (input.workingTreeClean !== true) return { decision: 'incomplete', reason: 'The working tree is dirty or unverifiable; commit SHA alone cannot identify the tested content.', passed, failed, incomplete, total: input.selectedCount };
-  return { decision: 'pass', reason: 'Every selected cross-platform definition passed with a clean, commit-bound workspace.', passed, failed, incomplete, total: input.selectedCount };
+  if (!input.definitionManifestSha256 || !/^[a-f0-9]{64}$/i.test(input.definitionManifestSha256)) return { decision: 'incomplete', reason: 'Selected test definition content is not cryptographically identified.', passed, failed, incomplete, total: input.selectedCount };
+  if (input.definitionsUnchanged !== true) return { decision: 'incomplete', reason: 'One or more selected test definitions changed or disappeared during execution.', passed, failed, incomplete, total: input.selectedCount };
+  return { decision: 'pass', reason: 'Every selected definition passed; source revision and exact test-definition content are bound to the report.', passed, failed, incomplete, total: input.selectedCount };
 }
 
 export function uniquePlatforms(platforms: PlatformKind[]): PlatformKind[] {

@@ -12,7 +12,7 @@ Close the gap between the existing single-definition cross-platform engine and p
 - Definitions execute sequentially to avoid cross-definition target contention. Each definition may use bounded parallel platform execution (1–4 targets) through the existing engine.
 - Per-definition checkpoints are written below .androidmcp-framework/test-reports/.runs/cross-platform/.
 - One JSON, Markdown and JUnit suite report is produced, with redacted test variables and per-platform/step outcomes.
-- The final gate distinguishes pass, fail and incomplete. A pass requires every selected definition to finish successfully, a valid Git HEAD, and a clean working tree.
+- The final gate distinguishes pass, fail and incomplete. A pass requires every selected definition to finish successfully, a valid Git HEAD, a clean working tree, a SHA-256 manifest of the exact selected definition files, and confirmation that those files did not change during execution. This explicitly binds ignored project-local test definitions to the report.
 - stopOnFailure is opt-in; by default the suite continues so the report captures independent failures.
 
 ## Save a test definition

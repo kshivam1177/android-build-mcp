@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { evaluateCrossPlatformSuiteGate } from '../suite.js';
 
 describe('cross-platform suite gate', () => {
-  const provenance = { gitHeadSha: 'a'.repeat(40), workingTreeClean: true };
+  const provenance = { gitHeadSha: 'a'.repeat(40), workingTreeClean: true, definitionManifestSha256: 'b'.repeat(64), definitionsUnchanged: true };
   it('passes only when every selected definition passes with clean commit provenance', () => {
     expect(evaluateCrossPlatformSuiteGate({ ...provenance, selectedCount: 2, outcomes: [
       { id: 'login', success: true, cancelled: false, timedOut: false, durationMs: 10 },
@@ -25,9 +25,11 @@ describe('cross-platform suite gate', () => {
       { id: 'login', success: false, cancelled: false, timedOut: true, durationMs: 10 }
     ] }).decision).toBe('incomplete');
   });
-  it('blocks passing outcomes without a current clean source revision', () => {
+  it('blocks passing outcomes without a current clean source revision or stable definition manifest', () => {
     const outcomes = [{ id: 'login', success: true, cancelled: false, timedOut: false, durationMs: 10 }];
-    expect(evaluateCrossPlatformSuiteGate({ selectedCount: 1, outcomes, gitHeadSha: null, workingTreeClean: true }).decision).toBe('incomplete');
-    expect(evaluateCrossPlatformSuiteGate({ selectedCount: 1, outcomes, gitHeadSha: 'a'.repeat(40), workingTreeClean: false }).decision).toBe('incomplete');
+    expect(evaluateCrossPlatformSuiteGate({ ...provenance, selectedCount: 1, outcomes, gitHeadSha: null }).decision).toBe('incomplete');
+    expect(evaluateCrossPlatformSuiteGate({ ...provenance, selectedCount: 1, outcomes, gitHeadSha: 'a'.repeat(40), workingTreeClean: false }).decision).toBe('incomplete');
+    expect(evaluateCrossPlatformSuiteGate({ ...provenance, selectedCount: 1, outcomes, definitionManifestSha256: null }).decision).toBe('incomplete');
+    expect(evaluateCrossPlatformSuiteGate({ ...provenance, selectedCount: 1, outcomes, definitionsUnchanged: false }).decision).toBe('incomplete');
   });
 });

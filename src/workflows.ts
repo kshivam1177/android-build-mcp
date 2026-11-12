@@ -85,7 +85,7 @@ export const WORKFLOWS: WorkflowDefinition[] = [
   },
   {
     name: 'cross-platform-automation',
-    description: 'Cross-platform runtime preflight, saved-suite orchestration, iOS simulator management, Android/iOS app lifecycle and keyboard actions, permission-prompt classification, test validation and execution, target inspection, deterministic assertions, failure diagnosis, optional AI assistance, and JSON/Markdown/JUnit reporting.',
+    description: 'Cross-platform runtime preflight, saved-suite orchestration, device-fleet registry and exclusive leases, evidence manifests and integrity validation, iOS simulator management, Android/iOS app lifecycle and keyboard actions, permission-prompt classification, test validation and execution, target inspection, deterministic assertions, failure diagnosis, optional AI assistance, and JSON/Markdown/JUnit reporting.',
     defaultEnabled: false,
     tools: crossPlatformAutomationTools,
   },
