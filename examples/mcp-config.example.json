@@ -1,9 +1,9 @@
 {
   "mcpServers": {
-    "androidmcp-framework": {
+    "testorbit": {
       "command": "node",
       "args": [
-        "/absolute/path/to/android-mcp-framwork/build/cli/index.js",
+        "/absolute/path/to/testorbit/build/cli/index.js",
         "mcp"
       ],
       "env": {

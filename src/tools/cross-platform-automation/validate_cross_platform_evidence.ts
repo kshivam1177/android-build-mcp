@@ -13,7 +13,7 @@ export const workflow = 'cross-platform-automation';
 export function register(server: McpServer) {
   return server.registerTool(toolName, {
     title: 'Validate Cross-Platform Evidence Bundle',
-    description: 'Independently verify a saved cross-platform suite evidence manifest, including SHA-256 hashes, file sizes, missing or unexpected artifacts, and unsafe paths. Only report directories beneath .androidmcp-framework/test-reports are accepted.',
+    description: 'Independently verify a saved cross-platform suite evidence manifest, including SHA-256 hashes, file sizes, missing or unexpected artifacts, and unsafe paths. Only report directories beneath .testorbit/test-reports are accepted.',
     inputSchema: {
       projectPath: z.string().optional(),
       reportDirectory: z.string().min(1).max(1024).describe('Project-relative report directory containing evidence-manifest.json.')
@@ -21,14 +21,14 @@ export function register(server: McpServer) {
     annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false }
   }, withErrorHandling(async (args: { projectPath?: string; reportDirectory: string }) => {
     const root = resolveProjectRoot(path.resolve(args.projectPath ?? process.cwd()));
-    const reportsRoot = path.resolve(root, '.androidmcp-framework', 'test-reports');
+    const reportsRoot = path.resolve(root, '.testorbit', 'test-reports');
     const directory = path.resolve(root, args.reportDirectory);
     const relative = path.relative(reportsRoot, directory);
     if (!relative || relative.startsWith('..') || path.isAbsolute(relative) || relative.split(path.sep).includes('.runs')) {
-      throw new Error('reportDirectory must identify a run directory beneath .androidmcp-framework/test-reports and cannot target internal .runs state.');
+      throw new Error('reportDirectory must identify a run directory beneath .testorbit/test-reports and cannot target internal .runs state.');
     }
     const projectReal = await fs.realpath(root);
-    const expectedReportsRoot = path.join(projectReal, '.androidmcp-framework', 'test-reports');
+    const expectedReportsRoot = path.join(projectReal, '.testorbit', 'test-reports');
     const rootReal = await fs.realpath(reportsRoot);
     if (rootReal !== expectedReportsRoot) throw new Error('The test-reports directory or one of its parents resolves outside the project root.');
     const directoryStat = await fs.lstat(directory);

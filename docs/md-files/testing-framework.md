@@ -20,11 +20,11 @@ Provide a change-aware testing lifecycle that reads a repository, maintains huma
 6. Execute through Google Android CLI, Gradle, Flutter tooling or supported automation adapters.
 7. Capture structured outcomes, logs, screenshots and environment details. Distinguish pass, fail, blocked, skipped and inconclusive.
 8. Propose instruction updates based on verified changes; do not silently replace user-authored instructions.
-9. Save immutable run reports under .androidmcp-framework/test-reports/YYYY-MM-DD/HHmmss/.
+9. Save immutable run reports under .testorbit/test-reports/YYYY-MM-DD/HHmmss/.
 
 ## On-disk layout
 
-All project-local framework data is rooted at .androidmcp-framework/:
+All project-local framework data is rooted at .testorbit/:
 
 - config.yaml — framework settings
 - instructions/ — user-authored and reviewed testing instructions
@@ -37,7 +37,7 @@ All project-local framework data is rooted at .androidmcp-framework/:
 - artifacts/bugreports/ — adb bugreport ZIP archives
 - knowledge/ — test knowledge and inventory
 
-The screenshot, snapshot_ui, record_emulator_video, and bug_report tools save outputs to the matching artifacts subdirectory by default. File names are timestamped to avoid replacing earlier evidence. The repository's .gitignore ignores .androidmcp-framework/ by default, so evidence and reports remain local unless a project owner intentionally changes that policy.
+The screenshot, snapshot_ui, record_emulator_video, and bug_report tools save outputs to the matching artifacts subdirectory by default. File names are timestamped to avoid replacing earlier evidence. The repository's .gitignore ignores .testorbit/ by default, so evidence and reports remain local unless a project owner intentionally changes that policy.
 
 ## Implemented capabilities
 
@@ -88,7 +88,7 @@ The autonomous cycle executes the selected project-native suite. Saved test-case
 
 ## Unified end-to-end run
 
-Use `run_unified_test_run` to coordinate Native Android Gradle or Flutter unit/integration suites and saved UI test cases under one run ID. The tool is plan-only unless `execute: true` is provided. It stores a durable manifest under `.androidmcp-framework/test-reports/.runs/<runId>.json`, saves one final Markdown/JSON report, captures screenshots and redacted logcat when UI actions fail, and applies a strict pass/fail/incomplete evidence gate.
+Use `run_unified_test_run` to coordinate Native Android Gradle or Flutter unit/integration suites and saved UI test cases under one run ID. The tool is plan-only unless `execute: true` is provided. It stores a durable manifest under `.testorbit/test-reports/.runs/<runId>.json`, saves one final Markdown/JSON report, captures screenshots and redacted logcat when UI actions fail, and applies a strict pass/fail/incomplete evidence gate.
 
 Resume with `resumeRunId`. The project root and Git HEAD must match. Passed items are preserved; interrupted native suites can resume. Interrupted UI cases are not replayed automatically because taps/submissions may have side effects. Native suite retries are capped at two and limited to classified transient infrastructure errors; UI actions and assertions are not retried automatically.
 

@@ -5,6 +5,7 @@ import { withErrorHandling, textResult } from '../../utils/response.js';
 import { execCommand } from '../../utils/exec.js';
 import { getAdbPath } from '../../utils/adb.js';
 import { loadConfig } from '../../config/loader.js';
+import { DEFAULT_CONFIG } from '../../config/schema.js';
 import type { ToolModule } from '../types.js';
 
 export const toolName = 'doctor';
@@ -27,9 +28,29 @@ async function checkBinary(name: string, command: string, args: string[], requir
   }
 }
 
+/** Check whether WebDriverAgent answers on its default local port (iOS). */
+async function checkWebDriverAgent(): Promise<CheckResult> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 2000);
+  try {
+    const response = await fetch('http://127.0.0.1:8100/status', { signal: controller.signal });
+    return { name: 'WebDriverAgent (iOS)', ok: response.ok, required: false, detail: `HTTP ${response.status}` };
+  } catch (err) {
+    return { name: 'WebDriverAgent (iOS)', ok: false, required: false, detail: err instanceof Error ? err.message : String(err) };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 export async function runDoctorChecks(): Promise<{ summary: string; checks: CheckResult[] }> {
-  const config = loadConfig();
   const checks: CheckResult[] = [];
+  let config = DEFAULT_CONFIG;
+  try {
+    config = loadConfig();
+    checks.push({ name: 'config', ok: true, required: false, detail: 'config.yaml parses and validates' });
+  } catch (err) {
+    checks.push({ name: 'config', ok: false, required: false, detail: err instanceof Error ? err.message : String(err) });
+  }
   checks.push(await checkBinary('adb', getAdbPath(), ['version'], true));
   checks.push(await checkBinary('java', 'java', ['-version'], true));
   checks.push(await checkBinary('gradle', config.paths.gradlePath ?? 'gradle', ['--version'], false));
@@ -57,6 +78,11 @@ export async function runDoctorChecks(): Promise<{ summary: string; checks: Chec
   checks.push(await checkBinary('Android CLI', config.paths.androidCliPath ?? 'android', ['-V'], false));
   checks.push(await checkBinary('Tesseract OCR', process.env.TESSERACT_PATH || 'tesseract', ['--version'], false));
 
+  // TestOrbit checks (Phase 0 task 9): Maestro, Playwright, WebDriverAgent.
+  checks.push(await checkBinary('Maestro', 'maestro', ['--version'], false));
+  checks.push(await checkBinary('Playwright', 'npx', ['--no-install', 'playwright', '--version'], false));
+  checks.push(await checkWebDriverAgent());
+
   const requiredFailed = checks.filter((c) => c.required && !c.ok);
   const summary = requiredFailed.length === 0
     ? 'All required checks passed.'
@@ -69,7 +95,7 @@ export function register(server: McpServer) {
     toolName,
     {
       title: 'Doctor',
-      description: 'Check Android development prerequisites: adb, Java, Gradle, Android SDK, emulator, build-tools and the optional Google Android CLI integration. This framework does not require Python.',
+      description: 'Check Android development prerequisites: adb, Java, Gradle, Android SDK, emulator, build-tools and the optional Google Android CLI integration, plus TestOrbit checks (config valid, Maestro, Playwright, WebDriverAgent). This framework does not require Python.',
       inputSchema: {},
       annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true },
     },

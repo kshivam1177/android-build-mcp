@@ -10,7 +10,7 @@ export const workflow = 'testing-intelligence';
 export function register(server: McpServer) {
   return server.registerTool(toolName, {
     title: 'Save Test Instructions',
-    description: 'Save or update a named, human-readable test instruction under .androidmcp-framework/instructions. Existing files are never overwritten unless overwrite is explicitly true.',
+    description: 'Save or update a named, human-readable test instruction under .testorbit/instructions. Existing files are never overwritten unless overwrite is explicitly true.',
     inputSchema: { projectPath: z.string().optional(), name: z.string().min(1).max(100), instructions: z.string().min(1).max(30000), overwrite: z.boolean().optional().describe('Must be true to replace an existing instruction file.') },
     annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
   }, withErrorHandling(async (args: { projectPath?: string; name: string; instructions: string; overwrite?: boolean }) => {

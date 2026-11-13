@@ -8,7 +8,7 @@ const roots: string[] = [];
 async function createReportDirectory() {
   const root = await fs.mkdtemp(path.join(os.tmpdir(), 'amf-evidence-'));
   roots.push(root);
-  const directory = path.join(root, '.androidmcp-framework', 'test-reports', '2026-11-03', 'run-1');
+  const directory = path.join(root, '.testorbit', 'test-reports', '2026-11-03', 'run-1');
   await fs.mkdir(directory, { recursive: true });
   await fs.writeFile(path.join(directory, 'report.json'), '{"passed":true}', 'utf8');
   await fs.mkdir(path.join(directory, 'screenshots'));

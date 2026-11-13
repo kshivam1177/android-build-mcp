@@ -2,7 +2,8 @@ import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { withErrorHandling, textResult } from '../../utils/response.js';
 import { resolveTargetAndBackend } from './_shared.js';
-import { isRecording, recordAction } from '../../automation/recorder.js';
+import { isRecording } from '../../automation/recorder.js';
+import { finishRecordingProbe, startRecordingProbe } from './recording-probe.js';
 import type { ToolModule } from '../types.js';
 
 export const toolName = 'key_press';
@@ -46,8 +47,9 @@ export function register(server: McpServer) {
       const stepStart = Date.now();
       const { target, backend } = await resolveTargetAndBackend(args.targetId);
       const keyCode = normalizeKeyCode(args.keyCode);
+      const probe = await startRecordingProbe(backend, target.id);
       await backend.keyEvent(target.id, keyCode);
-      if (isRecording(target.id)) recordAction({ type: 'key_press', durationMs: Date.now() - stepStart, keyCode });
+      if (isRecording(target.id)) await finishRecordingProbe(probe, target.id, { type: 'key_press', durationMs: Date.now() - stepStart, keyCode });
       return textResult(`Sent ${keyCode} to ${target.id}.`, { target, keyCode, inputKeyCode: args.keyCode });
     })
   );

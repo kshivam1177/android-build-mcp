@@ -3,7 +3,7 @@ import path from 'node:path';
 import { resolveProjectRoot } from './paths.js';
 
 const SKIP_DIRS = new Set([
-  '.git', '.gradle', '.dart_tool', '.idea', '.androidmcp-framework',
+  '.git', '.gradle', '.dart_tool', '.idea', '.testorbit',
   '.android-build-mcp', '.androidbuildmcp', 'node_modules', 'build',
   'Pods', '.symlinks', 'vendor', 'coverage',
 ]);

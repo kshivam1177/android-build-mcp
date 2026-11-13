@@ -4,7 +4,7 @@ This PR bundles the next testing-framework increments into one reviewable change
 
 ## Phase 11 — Safe project-native test execution
 
-Use the MCP tool run_project_tests. Preview is the default; set execute=true only after reviewing the plan. The tool reuses existing Flutter or Native Android runners and selects only framework-defined commands: Flutter test / integration_test and Gradle unit / connected instrumentation task names. It uses argv-based process execution rather than a shell command string and writes Markdown/JSON reports plus a bounded command log under .androidmcp-framework/test-reports/.
+Use the MCP tool run_project_tests. Preview is the default; set execute=true only after reviewing the plan. The tool reuses existing Flutter or Native Android runners and selects only framework-defined commands: Flutter test / integration_test and Gradle unit / connected instrumentation task names. It uses argv-based process execution rather than a shell command string and writes Markdown/JSON reports plus a bounded command log under .testorbit/test-reports/.
 
 Supported suites:
 - Flutter unit/widget tests.

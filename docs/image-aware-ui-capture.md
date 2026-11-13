@@ -4,8 +4,8 @@ The `analyze_screen_image` MCP tool combines an Android screenshot with the sema
 
 ## What it returns
 
-- A screenshot attached to the MCP response and saved under `.androidmcp-framework/artifacts/screenshots/`.
-- A JSON report under `.androidmcp-framework/artifacts/image-analysis/`.
+- A screenshot attached to the MCP response and saved under `.testorbit/artifacts/screenshots/`.
+- A JSON report under `.testorbit/artifacts/image-analysis/`.
 - Semantic elements with bounds, enabled/clickable state, resource IDs, accessibility descriptions, and OCR text.
 - OCR word bounds and confidence, with an optional `matchedElementRef` when a word falls inside a semantic element's bounds.
 - Warnings if optional image processing or OCR dependencies are missing.

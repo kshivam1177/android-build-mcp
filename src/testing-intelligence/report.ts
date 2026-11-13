@@ -93,7 +93,7 @@ export async function writeTestRunReport(projectRoot: string, input: TestRunRepo
   const date = now.toISOString().slice(0, 10);
   const time = now.toISOString().slice(11, 23).replace(/:/g, '-');
   const runId = `${time}-${randomUUID().slice(0, 8)}`;
-  const directory = path.join(root, '.androidmcp-framework', 'test-reports', safeSegment(date), safeSegment(runId));
+  const directory = path.join(root, '.testorbit', 'test-reports', safeSegment(date), safeSegment(runId));
   const report = redactSecrets({ ...input, runId, createdAt: now.toISOString() }) as TestRunReport & { runId: string; createdAt: string };
   await mkdir(directory, { recursive: true });
   const markdownPath = path.join(directory, 'report.md');

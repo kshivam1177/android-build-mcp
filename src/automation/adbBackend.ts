@@ -1,9 +1,23 @@
 import { runAdbShell, getAdbPath } from '../utils/adb.js';
 import { execCommandBinary } from '../utils/exec.js';
-import { AndroidBuildMcpError } from '../types.js';
+import type { ExecOptions } from '../utils/exec.js';
+import { TestOrbitFrameworkError } from '../types.js';
 import type { AutomationBackend } from './backend.js';
 
-const DUMP_PATH = '/data/local/tmp/androidmcp_dump.xml';
+const DUMP_PATH = '/data/local/tmp/testorbit_dump.xml';
+
+/**
+ * Build an exec options object carrying only the fields that are set:
+ * an explicit `signal: undefined` is not assignable to the optional
+ * `signal` field under `exactOptionalPropertyTypes` (the TestOrbit
+ * tsconfig), so optional fields are spread in only when defined.
+ */
+function shellOptions(signal?: AbortSignal, timeoutMs?: number): Pick<ExecOptions, 'timeoutMs' | 'signal'> {
+  return {
+    ...(timeoutMs !== undefined ? { timeoutMs } : {}),
+    ...(signal !== undefined ? { signal } : {}),
+  };
+}
 
 /**
  * `input text` interprets the literal sequence "%s" as a space. adb's shell
@@ -31,14 +45,14 @@ export const adbBackend: AutomationBackend = {
 
   async dumpHierarchy(targetId: string, signal?: AbortSignal): Promise<string> {
     try {
-      await runAdbShell(targetId, ['uiautomator', 'dump', '--compressed', DUMP_PATH], { timeoutMs: 20_000, signal });
+      await runAdbShell(targetId, ['uiautomator', 'dump', '--compressed', DUMP_PATH], shellOptions(signal, 20_000));
     } catch (error) {
       if (signal?.aborted) throw error;
-      await runAdbShell(targetId, ['uiautomator', 'dump', DUMP_PATH], { timeoutMs: 20_000, signal });
+      await runAdbShell(targetId, ['uiautomator', 'dump', DUMP_PATH], shellOptions(signal, 20_000));
     }
-    const result = await runAdbShell(targetId, ['cat', DUMP_PATH], { timeoutMs: 20_000, signal });
+    const result = await runAdbShell(targetId, ['cat', DUMP_PATH], shellOptions(signal, 20_000));
     if (!result.stdout.includes('<hierarchy')) {
-      throw new AndroidBuildMcpError(
+      throw new TestOrbitFrameworkError(
         'COMMAND_FAILED',
         'uiautomator dump did not produce a hierarchy XML - is the screen on and unlocked?',
         { stdout: result.stdout.slice(0, 2000), stderr: result.stderr.slice(0, 2000) }
@@ -48,7 +62,7 @@ export const adbBackend: AutomationBackend = {
   },
 
   async tap(targetId: string, x: number, y: number, signal?: AbortSignal): Promise<void> {
-    await runAdbShell(targetId, ['input', 'tap', String(Math.round(x)), String(Math.round(y))], { signal });
+    await runAdbShell(targetId, ['input', 'tap', String(Math.round(x)), String(Math.round(y))], shellOptions(signal));
   },
 
   async longPress(targetId: string, x: number, y: number, durationMs = 600, signal?: AbortSignal): Promise<void> {
@@ -56,7 +70,7 @@ export const adbBackend: AutomationBackend = {
     // start/end coordinates held for `durationMs` is the standard trick.
     const xi = String(Math.round(x));
     const yi = String(Math.round(y));
-    await runAdbShell(targetId, ['input', 'swipe', xi, yi, xi, yi, String(durationMs)], { signal });
+    await runAdbShell(targetId, ['input', 'swipe', xi, yi, xi, yi, String(durationMs)], shellOptions(signal));
   },
 
   async swipe(targetId: string, startX: number, startY: number, endX: number, endY: number, durationMs = 300, signal?: AbortSignal): Promise<void> {
@@ -68,7 +82,7 @@ export const adbBackend: AutomationBackend = {
       String(Math.round(endX)),
       String(Math.round(endY)),
       String(durationMs),
-    ], { signal });
+    ], shellOptions(signal));
   },
 
   async drag(targetId: string, startX: number, startY: number, endX: number, endY: number, durationMs = 800, signal?: AbortSignal): Promise<void> {
@@ -80,23 +94,21 @@ export const adbBackend: AutomationBackend = {
       String(Math.round(endX)),
       String(Math.round(endY)),
       String(durationMs),
-    ], { signal });
+    ], shellOptions(signal));
   },
 
   async typeText(targetId: string, text: string, signal?: AbortSignal): Promise<void> {
-    await runAdbShell(targetId, ['input', 'text', escapeAdbInputText(text)], { signal });
+    await runAdbShell(targetId, ['input', 'text', escapeAdbInputText(text)], shellOptions(signal));
   },
 
   async keyEvent(targetId: string, keyCode: string, signal?: AbortSignal): Promise<void> {
-    await runAdbShell(targetId, ['input', 'keyevent', keyCode], { signal });
+    await runAdbShell(targetId, ['input', 'keyevent', keyCode], shellOptions(signal));
   },
 
   async screenshot(targetId: string, signal?: AbortSignal): Promise<{ data: Buffer; mimeType: string }> {
-    const result = await execCommandBinary(getAdbPath(), ['-s', targetId, 'exec-out', 'screencap', '-p'], {
-      timeoutMs: 20_000, signal
-    });
+    const result = await execCommandBinary(getAdbPath(), ['-s', targetId, 'exec-out', 'screencap', '-p'], shellOptions(signal, 20_000));
     if (result.exitCode !== 0 || result.stdout.length === 0) {
-      throw new AndroidBuildMcpError('COMMAND_FAILED', 'screencap produced no image data.', {
+      throw new TestOrbitFrameworkError('COMMAND_FAILED', 'screencap produced no image data.', {
         stderr: result.stderr.slice(0, 2000),
         exitCode: result.exitCode,
       });

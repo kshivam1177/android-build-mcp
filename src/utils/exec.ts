@@ -1,6 +1,6 @@
 import { spawn } from 'node:child_process';
 import type { ChildProcess } from 'node:child_process';
-import { AndroidBuildMcpError } from '../types.js';
+import { TestOrbitFrameworkError } from '../types.js';
 import type { ExecResult } from '../types.js';
 
 export interface ExecOptions {
@@ -30,7 +30,7 @@ function execute(command: string, args: string[], options: ExecOptions): Promise
 
   return new Promise((resolve, reject) => {
     if (options.signal?.aborted) {
-      reject(new AndroidBuildMcpError('COMMAND_FAILED', `Command cancelled before start: ${displayCommand}`, { command: displayCommand, cancelled: true }));
+      reject(new TestOrbitFrameworkError('COMMAND_FAILED', `Command cancelled before start: ${displayCommand}`, { command: displayCommand, cancelled: true }));
       return;
     }
 
@@ -38,7 +38,7 @@ function execute(command: string, args: string[], options: ExecOptions): Promise
     try {
       child = spawn(command, args, { cwd: options.cwd, env: options.env ?? process.env, shell: false });
     } catch (error) {
-      reject(new AndroidBuildMcpError('COMMAND_FAILED', `Failed to start command: ${displayCommand} (${(error as Error).message})`, { command: displayCommand }));
+      reject(new TestOrbitFrameworkError('COMMAND_FAILED', `Failed to start command: ${displayCommand} (${(error as Error).message})`, { command: displayCommand }));
       return;
     }
 
@@ -69,7 +69,7 @@ function execute(command: string, args: string[], options: ExecOptions): Promise
       reject(error);
       terminate();
     };
-    const onAbort = () => rejectOnce(new AndroidBuildMcpError(
+    const onAbort = () => rejectOnce(new TestOrbitFrameworkError(
       'COMMAND_FAILED', `Command cancelled: ${displayCommand}`, { command: displayCommand, cancelled: true }
     ));
 
@@ -80,9 +80,9 @@ function execute(command: string, args: string[], options: ExecOptions): Promise
       settled = true;
       cleanup();
       if (error.code === 'ENOENT') {
-        reject(new AndroidBuildMcpError('COMMAND_FAILED', `Executable not found on PATH: ${command}`, { command: displayCommand }));
+        reject(new TestOrbitFrameworkError('COMMAND_FAILED', `Executable not found on PATH: ${command}`, { command: displayCommand }));
       } else {
-        reject(new AndroidBuildMcpError('COMMAND_FAILED', `Failed to run command: ${displayCommand} (${error.message})`, { command: displayCommand }));
+        reject(new TestOrbitFrameworkError('COMMAND_FAILED', `Failed to run command: ${displayCommand} (${error.message})`, { command: displayCommand }));
       }
     });
     child.on('close', (code) => {
@@ -95,7 +95,7 @@ function execute(command: string, args: string[], options: ExecOptions): Promise
     options.signal?.addEventListener('abort', onAbort, { once: true });
     if (options.signal?.aborted) onAbort();
     if (!settled) {
-      timeoutTimer = setTimeout(() => rejectOnce(new AndroidBuildMcpError(
+      timeoutTimer = setTimeout(() => rejectOnce(new TestOrbitFrameworkError(
         'TIMEOUT', `Command timed out after ${timeoutMs}ms: ${displayCommand}`, { command: displayCommand, timeoutMs }
       )), timeoutMs);
       timeoutTimer.unref?.();

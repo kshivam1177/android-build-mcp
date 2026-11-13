@@ -13,9 +13,9 @@ export function register(server: McpServer) {
     toolName,
     {
       title: 'Run UI Workflow',
-      description: 'Validate and execute a reusable JSON UI workflow from .androidmcp-framework/workflows or replay a successfully cached sequence from .androidmcp-framework/action-sequences. Successful runs are saved as reusable action sequences with timings; screen definitions live under .androidmcp-framework/screens and reports under .androidmcp-framework/test-reports.',
+      description: 'Validate and execute a reusable JSON UI workflow from .testorbit/workflows or replay a successfully cached sequence from .testorbit/action-sequences. Successful runs are saved as reusable action sequences with timings; screen definitions live under .testorbit/screens and reports under .testorbit/test-reports.',
       inputSchema: {
-        workflowFile: z.string().min(1).max(200).describe('Relative JSON file path inside .androidmcp-framework/workflows, or action-sequences/<workflow-id>.json to replay a previously successful sequence.'),
+        workflowFile: z.string().min(1).max(200).describe('Relative JSON file path inside .testorbit/workflows, or action-sequences/<workflow-id>.json to replay a previously successful sequence.'),
         projectPath: z.string().optional().describe('Android project root; defaults to current working directory.'),
         deviceId: z.string().optional().describe('Optional device serial passed to Android CLI.'),
       },

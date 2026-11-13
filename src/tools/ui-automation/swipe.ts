@@ -2,8 +2,9 @@ import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { withErrorHandling, textResult } from '../../utils/response.js';
 import { resolveTargetAndBackend, getScreenSize, directionToCoords } from './_shared.js';
-import { AndroidBuildMcpError } from '../../types.js';
-import { isRecording, recordAction } from '../../automation/recorder.js';
+import { TestOrbitFrameworkError } from '../../types.js';
+import { isRecording } from '../../automation/recorder.js';
+import { finishRecordingProbe, startRecordingProbe } from './recording-probe.js';
 import type { ToolModule } from '../types.js';
 
 export const toolName = 'swipe';
@@ -46,12 +47,13 @@ export function register(server: McpServer) {
           ({ startX, startY, endX, endY } = directionToCoords(args.direction, screen, args.distance));
         }
         if (startX === undefined || startY === undefined || endX === undefined || endY === undefined) {
-          throw new AndroidBuildMcpError('INVALID_CONFIG', 'Provide either direction, or all of startX/startY/endX/endY.');
+          throw new TestOrbitFrameworkError('INVALID_CONFIG', 'Provide either direction, or all of startX/startY/endX/endY.');
         }
+        const probe = await startRecordingProbe(backend, target.id);
         await backend.swipe(target.id, startX, startY, endX, endY, args.durationMs);
         if (isRecording(target.id)) {
           const screenSize = await getScreenSize(target.id);
-          recordAction({
+          await finishRecordingProbe(probe, target.id, {
             type: 'swipe',
             durationMs: Date.now() - stepStart,
             swipe: { startX, startY, endX, endY },

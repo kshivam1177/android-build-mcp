@@ -66,13 +66,13 @@ function writeSetupGuide(directory: string): void {
   const packageRoot = path.resolve(moduleDir, '..', '..');
   const packagedGuide = path.join(packageRoot, 'docs', 'project-setup-guide.md');
   const fallbackGuide = [
-    '# AndroidMCP Framework — Project Setup',
+    '# TestOrbit — Project Setup',
     '',
-    '1. Run `androidmcp-framework doctor` to check Android SDK, adb, Java, Gradle, and devices.',
+    '1. Run `testorbit doctor` to check Android SDK, adb, Java, Gradle, and devices.',
     '2. Configure `enabledWorkflows` and `sessionDefaults` in `config.yaml`.',
     '3. Restart your MCP client after changing the configuration.',
-    '4. Use `androidmcp-framework tools` to list available MCP tools.',
-    '5. Reports and artifacts are stored under `.androidmcp-framework/` in your project.',
+    '4. Use `testorbit tools` to list available MCP tools.',
+    '5. Reports and artifacts are stored under `.testorbit/` in your project.',
     '',
     'See the project README and docs for MCP client configuration examples.',
     '',
@@ -98,7 +98,7 @@ function setupConfig(cwd: string, migrate: boolean): void {
   if (legacyPath && legacyPath !== canonicalPath) {
     if (!migrate) {
       console.log(`Found existing config at ${legacyPath}.`);
-      console.log(`Run "androidmcp-framework setup --migrate" to copy legacy project data into ${canonicalDir}; existing files will never be overwritten.`);
+      console.log(`Run "testorbit setup --migrate" to copy legacy project data into ${canonicalDir}; existing files will never be overwritten.`);
       writeSetupGuide(path.dirname(legacyPath));
       return;
     }
@@ -126,7 +126,7 @@ async function generateSkillCommand(cwd: string, requestedAgent?: string): Promi
     const agent = await chooseCodingAgent(projectRoot, requestedAgent);
     const result = generateAgentSkill(projectRoot, agent);
     console.log(result.created ? `Created coding-agent skill: ${result.filePath}` : `Skill already exists; left unchanged: ${result.filePath}`);
-    console.log(`Agent selected: ${agent}. The skill teaches the agent to use AndroidMCP Framework and preserve test evidence.`);
+    console.log(`Agent selected: ${agent}. The skill teaches the agent to use TestOrbit and preserve test evidence.`);
   } catch (error) {
     console.error(error instanceof Error ? error.message : String(error));
     process.exitCode = 1;
@@ -142,10 +142,10 @@ const cliArgs = hideBin(process.argv);
 if (path.basename(process.argv[1] ?? '') === 'skill-gen') cliArgs.unshift('skill-gen');
 
 await yargs(cliArgs)
-  .scriptName('androidmcp-framework')
+  .scriptName('testorbit')
   .command('mcp', 'Start the MCP server over stdio (for MCP clients)', () => {}, runMcp)
   .command('doctor', 'Check the local Android toolchain (adb, java, gradle, SDK, emulator)', () => {}, runDoctor)
-  .command('update', 'Update androidmcp-framework if a newer npm version exists and clear the npx execution cache', () => {}, runUpdate)
+  .command('update', 'Update testorbit if a newer npm version exists and clear the npx execution cache', () => {}, runUpdate)
   .command('workflows', 'List every workflow, its tool count, and whether it is on by default', () => {}, listWorkflows)
   .command(
     'tools',
@@ -155,7 +155,7 @@ await yargs(cliArgs)
   )
   .command(
     'setup',
-    'Initialize .androidmcp-framework/ in the current project; use --migrate to copy legacy files safely',
+    'Initialize .testorbit/ in the current project; use --migrate to copy legacy files safely',
     (y) => y
       .option('migrate', { type: 'boolean', default: false, describe: 'Copy files from a legacy project directory without overwriting existing files' })
       .option('agent', { type: 'string', choices: SUPPORTED_AGENTS as unknown as string[], describe: 'Coding agent to configure; otherwise ask in the terminal or auto-detect' }),
@@ -163,11 +163,11 @@ await yargs(cliArgs)
   )
   .command(
     'skill-gen',
-    'Generate an AndroidMCP Framework skill file for your coding agent',
+    'Generate an TestOrbit skill file for your coding agent',
     (y) => y.option('agent', { type: 'string', choices: SUPPORTED_AGENTS as unknown as string[], describe: 'Agent: claude, codex, gemini, antigravity, cursor, copilot, other, or auto' }),
     (argv) => generateSkillCommand(process.cwd(), argv.agent as CodingAgent | undefined)
   )
-  .demandCommand(1, 'Pass a command - try "androidmcp-framework --help".')
+  .demandCommand(1, 'Pass a command - try "testorbit --help".')
   .strict()
   .help()
   .parseAsync();

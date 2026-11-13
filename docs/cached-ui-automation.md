@@ -5,7 +5,7 @@ This feature reduces repeated discovery work by persisting project-specific scre
 ## Files written
 
 ```text
-.androidmcp-framework/
+.testorbit/
   screen-maps/
     login.json
     images/
@@ -27,11 +27,11 @@ Call the `save_screen_map` MCP tool with a stable screen ID such as `login`. It 
 - clickability, enabled/focusable/scrollable/checkable state;
 - device ID, display dimensions, screenshot path, and a SHA-256 screen fingerprint.
 
-The screen map is written to `.androidmcp-framework/screen-maps/<screenId>.json`; the image is saved under `screen-maps/images/`. Capturing the map does not run Sharp or Tesseract. Re-capturing a given ID updates that screen's current reference image and map.
+The screen map is written to `.testorbit/screen-maps/<screenId>.json`; the image is saved under `screen-maps/images/`. Capturing the map does not run Sharp or Tesseract. Re-capturing a given ID updates that screen's current reference image and map.
 
 ## Record and replay successful flows
 
-Define a normal workflow in `.androidmcp-framework/workflows/` and run it with `run_ui_workflow`. Only when every action succeeds, the runner writes a replayable copy to `.androidmcp-framework/action-sequences/<workflow-id>.json`. The copy includes cache metadata for the source workflow, last successful run, total duration, and per-step durations. Environment placeholders such as `${env:TEST_PASSWORD}` remain placeholders; secrets are not copied from the runtime environment.
+Define a normal workflow in `.testorbit/workflows/` and run it with `run_ui_workflow`. Only when every action succeeds, the runner writes a replayable copy to `.testorbit/action-sequences/<workflow-id>.json`. The copy includes cache metadata for the source workflow, last successful run, total duration, and per-step durations. Environment placeholders such as `${env:TEST_PASSWORD}` remain placeholders; secrets are not copied from the runtime environment.
 
 Replay the saved sequence by calling `run_ui_workflow` with:
 
@@ -42,7 +42,7 @@ Replay the saved sequence by calling `run_ui_workflow` with:
 }
 ```
 
-Screen definitions are still loaded from `.androidmcp-framework/screens/`, so the sequence can be validated and updated independently from the screen map.
+Screen definitions are still loaded from `.testorbit/screens/`, so the sequence can be validated and updated independently from the screen map.
 
 ## Fast path and safety
 

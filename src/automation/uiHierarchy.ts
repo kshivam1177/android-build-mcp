@@ -1,4 +1,4 @@
-import { AndroidBuildMcpError } from '../types.js';
+import { TestOrbitFrameworkError } from '../types.js';
 import type { UiBounds, UiNode, UiSnapshot } from '../types.js';
 
 function unescapeXml(value: string): string {
@@ -45,7 +45,10 @@ const TAG_RE = /<node((?:\s+[a-zA-Z_:][\w:.-]*="[^"]*")*)\s*(\/)?>|<\/node>/g;
  */
 export function parseUiHierarchy(xml: string): UiNode[] {
   const nodes: UiNode[] = [];
-  const depthStack: number[] = [];
+  // Stack of open nodes' refs, root first: the top is the current node's
+  // parent, the whole stack is its ancestor chain. TestOrbit's stable id
+  // derivation (B3) needs both — the old depth-only stack discarded them.
+  const refStack: string[] = [];
   let refCounter = 0;
   let match: RegExpExecArray | null;
   TAG_RE.lastIndex = 0;
@@ -53,21 +56,31 @@ export function parseUiHierarchy(xml: string): UiNode[] {
   while ((match = TAG_RE.exec(xml)) !== null) {
     const [full, attrString, selfClose] = match;
     if (full === '</node>') {
-      depthStack.pop();
+      refStack.pop();
       continue;
     }
-    const depth = depthStack.length;
+    const depth = refStack.length;
     const attrs = parseAttributes(attrString ?? '');
     const bounds = parseBounds(attrs.bounds);
     refCounter += 1;
+    const ref = `e${refCounter}`;
+    const parentRef = refStack.length > 0 ? refStack[refStack.length - 1] : undefined;
+    // Optional UiNode fields are assigned only when present: an explicit
+    // `undefined` is not assignable under `exactOptionalPropertyTypes`
+    // (the TestOrbit tsconfig).
+    const className = attrs.class || undefined;
+    const text = attrs.text || undefined;
+    const contentDesc = attrs['content-desc'] || undefined;
+    const resourceId = attrs['resource-id'] || undefined;
+    const packageName = attrs.package || undefined;
     nodes.push({
-      ref: `e${refCounter}`,
+      ref,
       index: Number(attrs.index ?? nodes.length),
-      className: attrs.class || undefined,
-      text: attrs.text || undefined,
-      contentDesc: attrs['content-desc'] || undefined,
-      resourceId: attrs['resource-id'] || undefined,
-      packageName: attrs.package || undefined,
+      ...(className !== undefined ? { className } : {}),
+      ...(text !== undefined ? { text } : {}),
+      ...(contentDesc !== undefined ? { contentDesc } : {}),
+      ...(resourceId !== undefined ? { resourceId } : {}),
+      ...(packageName !== undefined ? { packageName } : {}),
       bounds,
       centerX: Math.round((bounds.left + bounds.right) / 2),
       centerY: Math.round((bounds.top + bounds.bottom) / 2),
@@ -78,8 +91,10 @@ export function parseUiHierarchy(xml: string): UiNode[] {
       checkable: attrs.checkable === 'true',
       checked: attrs.checked === 'true',
       depth,
+      ...(parentRef !== undefined ? { parentRef } : {}),
+      ancestorChain: [...refStack],
     });
-    if (!selfClose) depthStack.push(depth);
+    if (!selfClose) refStack.push(ref);
   }
 
   return nodes;
@@ -102,14 +117,14 @@ export function getCachedSnapshot(targetId: string): UiSnapshot | undefined {
 export function resolveElementRef(targetId: string, ref: string): UiNode {
   const snapshot = snapshotsByTarget.get(targetId);
   if (!snapshot) {
-    throw new AndroidBuildMcpError(
+    throw new TestOrbitFrameworkError(
       'STALE_SNAPSHOT',
       `No UI snapshot cached for ${targetId} yet. Call snapshot_ui first, then use its elementRef values.`
     );
   }
   const node = snapshot.nodes.find((n) => n.ref === ref);
   if (!node) {
-    throw new AndroidBuildMcpError(
+    throw new TestOrbitFrameworkError(
       'ELEMENT_REF_NOT_FOUND',
       `elementRef "${ref}" isn't in the latest snapshot for ${targetId}. The screen may have changed - call snapshot_ui again.`,
       { requestedRef: ref, availableRefs: snapshot.nodes.map((n) => n.ref) }

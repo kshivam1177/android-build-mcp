@@ -9,7 +9,7 @@ import {
   markWorkflowEnabled,
   markWorkflowDisabled,
 } from '../../mcp/toolRegistry.js';
-import { AndroidBuildMcpError } from '../../types.js';
+import { TestOrbitFrameworkError } from '../../types.js';
 import type { ToolModule } from '../types.js';
 
 export const toolName = 'manage_workflows';
@@ -41,11 +41,11 @@ export function register(server: McpServer) {
       }
 
       if (!args.workflowName) {
-        throw new AndroidBuildMcpError('INVALID_CONFIG', 'workflowName is required for enable/disable.');
+        throw new TestOrbitFrameworkError('INVALID_CONFIG', 'workflowName is required for enable/disable.');
       }
       const toolNames = getToolNamesForWorkflow(args.workflowName);
       if (toolNames.length === 0) {
-        throw new AndroidBuildMcpError(
+        throw new TestOrbitFrameworkError(
           'WORKFLOW_NOT_FOUND',
           `No workflow named "${args.workflowName}". Known workflows: ${getWorkflowNames().join(', ')}`
         );

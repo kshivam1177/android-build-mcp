@@ -26,7 +26,7 @@ Captured stdout/stderr are redacted for common secret patterns and bounded to th
 
 ## Phase 47 — Timestamped evidence
 
-Execution writes `summary.json`, `report.json`, and `summary.md` under `.androidmcp-framework/test-reports/YYYY-MM-DD/`. The JSON includes suite results, counts, warnings, and limitations.
+Execution writes `summary.json`, `report.json`, and `summary.md` under `.testorbit/test-reports/YYYY-MM-DD/`. The JSON includes suite results, counts, warnings, and limitations.
 
 ## Phase 48 — Provenance and dirty-tree disclosure
 

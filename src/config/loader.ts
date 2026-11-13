@@ -4,7 +4,7 @@ import { parse as parseYaml } from 'yaml';
 import { ConfigSchema, DEFAULT_CONFIG } from './schema.js';
 import type { Config } from './schema.js';
 import { findProjectConfigPath, PROJECT_CONFIG_DIR, resolveProjectRoot } from '../utils/paths.js';
-import { AndroidBuildMcpError } from '../types.js';
+import { TestOrbitFrameworkError } from '../types.js';
 
 let cachedConfig: Config | null = null;
 let cachedConfigPath: string | null | undefined = undefined;
@@ -33,7 +33,7 @@ export function loadConfig(options: LoadConfigOptions = {}): Config {
     const fileContents = fs.readFileSync(resolvedPath, 'utf8');
     raw = parseYaml(fileContents) ?? {};
   } catch (err) {
-    throw new AndroidBuildMcpError(
+    throw new TestOrbitFrameworkError(
       'INVALID_CONFIG',
       `Could not read or parse ${resolvedPath}: ${(err as Error).message}`,
       { path: resolvedPath }
@@ -43,7 +43,7 @@ export function loadConfig(options: LoadConfigOptions = {}): Config {
   const result = ConfigSchema.safeParse(raw);
   if (!result.success) {
     const issues = result.error.issues.map((i) => `${i.path.join('.') || '(root)'}: ${i.message}`).join('; ');
-    throw new AndroidBuildMcpError('INVALID_CONFIG', `Invalid config at ${resolvedPath}: ${issues}`, {
+    throw new TestOrbitFrameworkError('INVALID_CONFIG', `Invalid config at ${resolvedPath}: ${issues}`, {
       path: resolvedPath,
     });
   }

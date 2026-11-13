@@ -41,7 +41,7 @@ describe('screenshot artifact persistence', () => {
       };
       const text = result.content.find((item) => item.type === 'text')?.text ?? '';
       const savedPath = text.match(/saved to: (.+)/)?.[1];
-      expect(savedPath).toBe(path.join(root, '.androidmcp-framework', 'artifacts', 'screenshots', path.basename(savedPath ?? '')));
+      expect(savedPath).toBe(path.join(root, '.testorbit', 'artifacts', 'screenshots', path.basename(savedPath ?? '')));
       expect(fs.readFileSync(savedPath!)).toEqual(imageData);
     } finally {
       process.chdir(originalCwd);
@@ -74,7 +74,7 @@ describe('screenshot artifact persistence', () => {
 
     expect(savedPath).toBeTruthy();
     expect(path.isAbsolute(savedPath!)).toBe(true);
-    expect(savedPath).toContain(path.join('.androidmcp-framework', 'artifacts', 'screenshots'));
+    expect(savedPath).toContain(path.join('.testorbit', 'artifacts', 'screenshots'));
     expect(savedPath).toMatch(/emulator-5554-.*\.png$/);
     expect(fs.readFileSync(savedPath!)).toEqual(imageData);
     expect(result.content[1]).toMatchObject({ type: 'image', mimeType: 'image/png', data: imageData.toString('base64') });

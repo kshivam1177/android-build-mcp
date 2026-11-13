@@ -3,7 +3,7 @@ import path from 'node:path';
 import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { withErrorHandling, textResult } from '../../utils/response.js';
-import { AndroidBuildMcpError } from '../../types.js';
+import { TestOrbitFrameworkError } from '../../types.js';
 import type { ToolModule } from '../types.js';
 
 export const toolName = 'list_modules';
@@ -53,7 +53,7 @@ export function register(server: McpServer) {
       const groovy = path.join(args.projectPath, 'settings.gradle');
       const settingsPath = fs.existsSync(kts) ? kts : fs.existsSync(groovy) ? groovy : null;
       if (!settingsPath) {
-        throw new AndroidBuildMcpError('PROJECT_NOT_FOUND', `No settings.gradle[.kts] under ${args.projectPath}.`);
+        throw new TestOrbitFrameworkError('PROJECT_NOT_FOUND', `No settings.gradle[.kts] under ${args.projectPath}.`);
       }
       const modules = extractIncludes(fs.readFileSync(settingsPath, 'utf8'));
       return textResult(modules.length > 0 ? modules.join('\n') : '(no include(...) statements found)', {

@@ -12,7 +12,7 @@ Make cross-platform test output independently verifiable after a run. A report s
 - The manifest itself is not recursively hashed.
 - New MCP tool: `validate_cross_platform_evidence`.
 - Validation detects missing, modified and unexpected files, duplicate paths, traversal attempts and symlinks.
-- Report-directory validation is restricted to real directories beneath `.androidmcp-framework/test-reports/`; internal checkpoint state under `.runs` is excluded.
+- Report-directory validation is restricted to real directories beneath `.testorbit/test-reports/`; internal checkpoint state under `.runs` is excluded.
 - Unit tests cover valid manifests, tampering, missing and unexpected files, traversal and symlink rejection.
 - New MCP tool: `manage_cross_platform_artifacts` for report retention inspection and pruning.
 - Retention inspection is read-only; pruning is dry-run by default and requires an explicit `confirm=true` after reviewing candidates.
@@ -24,7 +24,7 @@ Make cross-platform test output independently verifiable after a run. A report s
 After `run_cross_platform_suite(execute=true)` returns its report directory, call:
 
     validate_cross_platform_evidence(
-      reportDirectory=".androidmcp-framework/test-reports/2026-11-03/12-30-00-cross-platform-suite-..."
+      reportDirectory=".testorbit/test-reports/2026-11-03/12-30-00-cross-platform-suite-..."
     )
 
 The result includes:

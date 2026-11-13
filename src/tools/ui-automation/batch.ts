@@ -4,7 +4,7 @@ import { withErrorHandling, textResult } from '../../utils/response.js';
 import { parseUiHierarchy, resolveElementRef } from '../../automation/uiHierarchy.js';
 import { runAdbShell } from '../../utils/adb.js';
 import { resolveTargetAndBackend } from './_shared.js';
-import { AndroidBuildMcpError } from '../../types.js';
+import { TestOrbitFrameworkError } from '../../types.js';
 import type { ToolModule } from '../types.js';
 
 export const toolName = 'batch';
@@ -56,26 +56,26 @@ export function register(server: McpServer) {
 
           switch (step.action) {
             case 'tap':
-              if (x === undefined || y === undefined) throw new AndroidBuildMcpError('INVALID_CONFIG', 'tap needs elementRef or x/y.');
+              if (x === undefined || y === undefined) throw new TestOrbitFrameworkError('INVALID_CONFIG', 'tap needs elementRef or x/y.');
               await backend.tap(target.id, x, y);
               break;
             case 'long_press':
-              if (x === undefined || y === undefined) throw new AndroidBuildMcpError('INVALID_CONFIG', 'long_press needs elementRef or x/y.');
+              if (x === undefined || y === undefined) throw new TestOrbitFrameworkError('INVALID_CONFIG', 'long_press needs elementRef or x/y.');
               await backend.longPress(target.id, x, y, step.durationMs);
               break;
             case 'swipe':
               if (step.startX === undefined || step.startY === undefined || step.endX === undefined || step.endY === undefined) {
-                throw new AndroidBuildMcpError('INVALID_CONFIG', 'swipe needs startX/startY/endX/endY.');
+                throw new TestOrbitFrameworkError('INVALID_CONFIG', 'swipe needs startX/startY/endX/endY.');
               }
               await backend.swipe(target.id, step.startX, step.startY, step.endX, step.endY, step.durationMs);
               break;
             case 'type_text':
-              if (step.text === undefined) throw new AndroidBuildMcpError('INVALID_CONFIG', 'type_text needs text.');
+              if (step.text === undefined) throw new TestOrbitFrameworkError('INVALID_CONFIG', 'type_text needs text.');
               if (step.elementRef && x !== undefined && y !== undefined) await backend.tap(target.id, x, y);
               await backend.typeText(target.id, step.text);
               break;
             case 'key_press':
-              if (!step.keyCode) throw new AndroidBuildMcpError('INVALID_CONFIG', 'key_press needs keyCode.');
+              if (!step.keyCode) throw new TestOrbitFrameworkError('INVALID_CONFIG', 'key_press needs keyCode.');
               await backend.keyEvent(target.id, step.keyCode);
               break;
             case 'wait':
@@ -86,10 +86,10 @@ export function register(server: McpServer) {
               break;
             case 'clear_and_type':
               if (x === undefined || y === undefined) {
-                throw new AndroidBuildMcpError('INVALID_CONFIG', 'clear_and_type needs elementRef or x/y.');
+                throw new TestOrbitFrameworkError('INVALID_CONFIG', 'clear_and_type needs elementRef or x/y.');
               }
               if (step.text === undefined) {
-                throw new AndroidBuildMcpError('INVALID_CONFIG', 'clear_and_type needs text.');
+                throw new TestOrbitFrameworkError('INVALID_CONFIG', 'clear_and_type needs text.');
               }
               await backend.tap(target.id, x, y);
               await backend.keyEvent(target.id, 'KEYCODE_MOVE_END');
@@ -99,7 +99,7 @@ export function register(server: McpServer) {
             case 'assert_text_visible':
             case 'assert_text_gone': {
               if (!step.assertText) {
-                throw new AndroidBuildMcpError('INVALID_CONFIG', `${step.action} needs assertText.`);
+                throw new TestOrbitFrameworkError('INVALID_CONFIG', `${step.action} needs assertText.`);
               }
               const xml = await backend.dumpHierarchy(target.id);
               const nodes = parseUiHierarchy(xml);
@@ -108,10 +108,10 @@ export function register(server: McpServer) {
                 (node.contentDesc ?? '').includes(step.assertText!)
               );
               if (step.action === 'assert_text_visible' && !found) {
-                throw new AndroidBuildMcpError('COMMAND_FAILED', `Assertion failed: "${step.assertText}" is not visible.`);
+                throw new TestOrbitFrameworkError('COMMAND_FAILED', `Assertion failed: "${step.assertText}" is not visible.`);
               }
               if (step.action === 'assert_text_gone' && found) {
-                throw new AndroidBuildMcpError('COMMAND_FAILED', `Assertion failed: "${step.assertText}" is still visible.`);
+                throw new TestOrbitFrameworkError('COMMAND_FAILED', `Assertion failed: "${step.assertText}" is still visible.`);
               }
               break;
             }

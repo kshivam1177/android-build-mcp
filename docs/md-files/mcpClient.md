@@ -1,6 +1,6 @@
 # MCP client configuration
 
-AndroidMCP Framework currently runs as a local **stdio MCP server**. It uses the package/CLI name `androidmcp-framework` and starts with the `mcp` command. For a client-specific walkthrough, see [MCP integration guide](./mcp-guide.md).
+TestOrbit currently runs as a local **stdio MCP server**. It uses the package/CLI name `testorbit` and starts with the `mcp` command. For a client-specific walkthrough, see [MCP integration guide](./mcp-guide.md).
 
 ## Generic configuration
 
@@ -9,9 +9,9 @@ Clients using the common `mcpServers` schema can use:
 ```json
 {
   "mcpServers": {
-    "androidmcp-framework": {
+    "testorbit": {
       "command": "npx",
-      "args": ["-y", "androidmcp-framework@latest", "mcp"]
+      "args": ["-y", "testorbit@latest", "mcp"]
     }
   }
 }
@@ -22,10 +22,10 @@ For VS Code's `.vscode/mcp.json` schema, use a top-level `servers` object:
 ```json
 {
   "servers": {
-    "androidmcp-framework": {
+    "testorbit": {
       "type": "stdio",
       "command": "npx",
-      "args": ["-y", "androidmcp-framework@latest", "mcp"]
+      "args": ["-y", "testorbit@latest", "mcp"]
     }
   }
 }
@@ -37,23 +37,23 @@ Run these in a terminal, not inside the MCP configuration:
 
 ```bash
 node --version
-npx -y androidmcp-framework@latest --help
-npx -y androidmcp-framework@latest doctor
-npx -y androidmcp-framework@latest workflows
-npx -y androidmcp-framework@latest tools
+npx -y testorbit@latest --help
+npx -y testorbit@latest doctor
+npx -y testorbit@latest workflows
+npx -y testorbit@latest tools
 ```
 
-Then restart/reload the MCP client and ask it to list the AndroidMCP Framework tools or call the available doctor tool.
+Then restart/reload the MCP client and ask it to list the TestOrbit tools or call the available doctor tool.
 
 ## Project configuration is separate
 
 The MCP client configuration only starts the server. It does not configure which project or workflows should be used. From the Android app repository root, run:
 
 ```bash
-npx -y androidmcp-framework@latest setup
+npx -y testorbit@latest setup
 ```
 
-Review the generated `.androidmcp-framework/config.yaml`, especially `enabledWorkflows` and `sessionDefaults`. If the repository has legacy `.android-build-mcp/` or `.androidbuildmcp/` data, use `androidmcp-framework setup --migrate` after reviewing it. Restart the MCP client after changing configuration.
+Review the generated `.testorbit/config.yaml`, especially `enabledWorkflows` and `sessionDefaults`. If the repository has legacy `.android-build-mcp/` or `.androidbuildmcp/` data, use `testorbit setup --migrate` after reviewing it. Restart the MCP client after changing configuration.
 
 ## Current transport limitation
 
