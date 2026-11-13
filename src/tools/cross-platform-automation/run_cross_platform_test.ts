@@ -19,7 +19,7 @@ export const workflow = 'cross-platform-automation';
 export function register(server: McpServer) {
   return server.registerTool(toolName, {
     title: 'Run Cross-Platform Test',
-    description: 'Execute one validated test definition across Android, Flutter, iOS and/or Web. Produces redacted JSON, Markdown and JUnit reports with failure evidence under .androidmcp-framework/test-reports.',
+    description: 'Execute one validated test definition across Android, Flutter, iOS and/or Web. Produces redacted JSON, Markdown and JUnit reports with failure evidence under .testorbit/test-reports.',
     inputSchema: {
       testDefinition: z.unknown().describe('Complete schemaVersion 1.0 test definition.'),
       projectPath: z.string().optional().describe('Project root for report output; defaults to the current working directory.'),
@@ -48,7 +48,7 @@ export function register(server: McpServer) {
     const date = new Date();
     const dateFolder = date.toISOString().slice(0, 10);
     const timeFolder = date.toISOString().slice(11, 19).replace(/:/g, '-') + '-' + randomUUID().slice(0, 8);
-    const reportDirectory = path.join(projectRoot, '.androidmcp-framework', 'test-reports', dateFolder, timeFolder);
+    const reportDirectory = path.join(projectRoot, '.testorbit', 'test-reports', dateFolder, timeFolder);
     await fs.mkdir(reportDirectory, { recursive: true });
     const reportResult = {
       ...result,

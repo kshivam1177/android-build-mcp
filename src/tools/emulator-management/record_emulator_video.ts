@@ -22,7 +22,7 @@ export function register(server: McpServer) {
         targetId: z.string().optional(),
         processId: z.string().optional().describe('Required for action:"stop" - the processId returned by action:"start".'),
         projectPath: z.string().optional().describe('Project root for the recording; defaults to the current working directory.'),
-        localOutputPath: z.string().optional().describe('Optional explicit output path. Defaults to .androidmcp-framework/artifacts/recordings/.'),
+        localOutputPath: z.string().optional().describe('Optional explicit output path. Defaults to .testorbit/artifacts/recordings/.'),
       },
       annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
     },
@@ -30,7 +30,7 @@ export function register(server: McpServer) {
       async (args: { action: 'start' | 'stop'; targetId?: string; processId?: string; projectPath?: string; localOutputPath?: string }) => {
         if (args.action === 'start') {
           const target = await resolveTarget({ requestedId: args.targetId });
-          const remotePath = `/sdcard/androidmcp_${Date.now()}.mp4`;
+          const remotePath = `/sdcard/testorbit_${Date.now()}.mp4`;
           const tracked = startBackgroundProcess(getAdbPath(), ['-s', target.id, 'shell', 'screenrecord', remotePath], {
             targetId: target.id,
             kind: 'screenrecord',

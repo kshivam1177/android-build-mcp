@@ -12,8 +12,8 @@ describe('amf update helpers', () => {
 
   it('detects whether the CLI belongs to the global npm installation', () => {
     const root = path.join(os.tmpdir(), 'npm-global');
-    expect(isPathInsideDirectory(path.join(root, 'node_modules', 'androidmcp-framework'), root)).toBe(true);
-    expect(isPathInsideDirectory(path.join(os.tmpdir(), 'project', 'node_modules', 'androidmcp-framework'), root)).toBe(false);
+    expect(isPathInsideDirectory(path.join(root, 'node_modules', 'testorbit'), root)).toBe(true);
+    expect(isPathInsideDirectory(path.join(os.tmpdir(), 'project', 'node_modules', 'testorbit'), root)).toBe(false);
     expect(isPathInsideDirectory(root, root)).toBe(true);
   });
 
@@ -31,12 +31,12 @@ describe('amf update helpers', () => {
     const root = fs.mkdtempSync(path.join(os.tmpdir(), 'amf-update-'));
     roots.push(root);
     const globalRoot = path.join(root, 'node_modules');
-    const packageRoot = path.join(globalRoot, 'androidmcp-framework');
+    const packageRoot = path.join(globalRoot, 'testorbit');
     const cacheRoot = path.join(root, 'npm-cache');
     const npxCache = path.join(cacheRoot, '_npx');
     fs.mkdirSync(packageRoot, { recursive: true });
     fs.mkdirSync(npxCache, { recursive: true });
-    fs.writeFileSync(path.join(packageRoot, 'package.json'), '{"name":"androidmcp-framework","version":"1.0.0"}');
+    fs.writeFileSync(path.join(packageRoot, 'package.json'), '{"name":"testorbit","version":"1.0.0"}');
     fs.writeFileSync(path.join(npxCache, 'cache-entry'), 'remove me');
     fs.writeFileSync(path.join(cacheRoot, 'other-cache-entry'), 'keep me');
     const calls: string[][] = [];
@@ -45,7 +45,7 @@ describe('amf update helpers', () => {
       if (args[0] === 'root') return globalRoot;
       if (args[0] === 'view') return '1.2.3';
       if (args[0] === 'config') return cacheRoot;
-      if (args[0] === 'list') return JSON.stringify({ dependencies: { 'androidmcp-framework': { version: '1.2.3' } } });
+      if (args[0] === 'list') return JSON.stringify({ dependencies: { 'testorbit': { version: '1.2.3' } } });
       return '';
     };
     const log = vi.fn();
@@ -53,8 +53,8 @@ describe('amf update helpers', () => {
     const result = runSelfUpdate(packageRoot, runner, log);
 
     expect(result).toMatchObject({ success: true, updated: true, currentVersion: '1.0.0', latestVersion: '1.2.3', installedVersion: '1.2.3' });
-    expect(calls).toContainEqual(['view', 'androidmcp-framework', 'version']);
-    expect(calls).toContainEqual(['install', '--global', 'androidmcp-framework@latest']);
+    expect(calls).toContainEqual(['view', 'testorbit', 'version']);
+    expect(calls).toContainEqual(['install', '--global', 'testorbit@latest']);
     expect(calls).toContainEqual(['config', 'get', 'cache']);
     expect(calls).toContainEqual(['list', '--global', '--depth=0', '--json']);
     expect(fs.existsSync(npxCache)).toBe(false);
@@ -66,7 +66,7 @@ describe('amf update helpers', () => {
     const root = fs.mkdtempSync(path.join(os.tmpdir(), 'amf-update-current-'));
     roots.push(root);
     const globalRoot = path.join(root, 'node_modules');
-    const packageRoot = path.join(globalRoot, 'androidmcp-framework');
+    const packageRoot = path.join(globalRoot, 'testorbit');
     fs.mkdirSync(packageRoot, { recursive: true });
     fs.writeFileSync(path.join(packageRoot, 'package.json'), '{"version":"1.2.3"}');
     const calls: string[][] = [];

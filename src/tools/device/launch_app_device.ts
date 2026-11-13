@@ -4,7 +4,7 @@ import { withErrorHandling, textResult } from '../../utils/response.js';
 import { resolveTarget, runAdbShell } from '../../utils/adb.js';
 import { inspectApk, findBuiltApk, moduleDirFromPath } from '../../utils/apk.js';
 import { getEffectiveSessionDefaults } from '../../session/defaults.js';
-import { AndroidBuildMcpError } from '../../types.js';
+import { TestOrbitFrameworkError } from '../../types.js';
 import type { ToolModule } from '../types.js';
 
 export const toolName = 'launch_app_device';
@@ -40,7 +40,7 @@ export function register(server: McpServer) {
           const module = args.module ?? defaults.module;
           const variant = args.variant ?? defaults.variant;
           if (!projectPath || !module || !variant) {
-            throw new AndroidBuildMcpError(
+            throw new TestOrbitFrameworkError(
               'INVALID_CONFIG',
               'Provide packageId directly, or projectPath+module+variant (or set sessionDefaults) so the APK can be inspected.'
             );

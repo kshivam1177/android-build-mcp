@@ -1,6 +1,6 @@
 # Supported MCP clients and transports
 
-AndroidMCP Framework is an MCP server implemented with the official TypeScript SDK. The current release exposes **tools over local stdio transport**. It is not currently an HTTP server, and it does not claim MCP Resources or Prompts support unless those capabilities are explicitly added and tested.
+TestOrbit is an MCP server implemented with the official TypeScript SDK. The current release exposes **tools over local stdio transport**. It is not currently an HTTP server, and it does not claim MCP Resources or Prompts support unless those capabilities are explicitly added and tested.
 
 ## Compatibility matrix
 
@@ -19,7 +19,7 @@ AndroidMCP Framework is an MCP server implemented with the official TypeScript S
 ## Transport and protocol scope
 
 - **Transport:** stdio only in the current release.
-- **Server identity:** `androidmcp-framework`; display name: `AndroidMCP Framework`; npm package/CLI name: `androidmcp-framework`.
+- **Server identity:** `testorbit`; display name: `TestOrbit`; npm package/CLI name: `testorbit`.
 - **MCP capability currently exposed:** tools and tool schemas/results.
 - **Not currently provided:** a built-in Streamable HTTP endpoint. Do not configure an HTTP URL for this release.
 - **Tools are workflow-gated:** tool registration and tool availability are distinct. Optional workflows may need enabling in the project configuration and a server restart.

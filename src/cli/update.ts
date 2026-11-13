@@ -122,14 +122,14 @@ export function runSelfUpdate(
   const resolvedPackageRoot = canonicalPath(packageRoot);
   const resolvedGlobalRoot = canonicalPath(globalRoot);
   if (!isPathInsideDirectory(resolvedPackageRoot, resolvedGlobalRoot)) {
-    const message = 'This command is not running from the global npm installation. Install it globally first with: npm install -g androidmcp-framework@latest';
+    const message = 'This command is not running from the global npm installation. Install it globally first with: npm install -g testorbit@latest';
     log(message);
     return { success: false, currentVersion, message };
   }
 
   let latestVersion: string;
   try {
-    latestVersion = runner(['view', 'androidmcp-framework', 'version']).trim();
+    latestVersion = runner(['view', 'testorbit', 'version']).trim();
     if (!latestVersion) throw new Error('empty version response');
   } catch {
     const message = 'Could not reach the npm registry to determine the latest version. No update was attempted.';
@@ -150,14 +150,14 @@ export function runSelfUpdate(
     return { success: false, currentVersion, latestVersion, message };
   }
   if (comparison <= 0) {
-    const message = `androidmcp-framework ${currentVersion} is already up to date (registry latest: ${latestVersion}). No installation or cache cleanup was needed.`;
+    const message = `testorbit ${currentVersion} is already up to date (registry latest: ${latestVersion}). No installation or cache cleanup was needed.`;
     log(message);
     return { success: true, updated: false, currentVersion, latestVersion, installedVersion: currentVersion, message };
   }
 
-  log(`Updating androidmcp-framework: ${currentVersion} -> ${latestVersion}...`);
+  log(`Updating testorbit: ${currentVersion} -> ${latestVersion}...`);
   try {
-    runner(['install', '--global', 'androidmcp-framework@latest'], true);
+    runner(['install', '--global', 'testorbit@latest'], true);
   } catch {
     const message = 'npm could not install the latest version. The existing installation was not deliberately uninstalled first; check npm permissions/network and retry.';
     log(message);
@@ -177,10 +177,10 @@ export function runSelfUpdate(
     const parsed = JSON.parse(output) as {
       dependencies?: Record<string, { version?: string }>;
     };
-    installedVersion = parsed.dependencies?.['androidmcp-framework']?.version;
+    installedVersion = parsed.dependencies?.['testorbit']?.version;
   } catch {
     try {
-      const installedPackageJson = path.join(globalRoot, 'androidmcp-framework', 'package.json');
+      const installedPackageJson = path.join(globalRoot, 'testorbit', 'package.json');
       installedVersion = readPackageVersion(fs.readFileSync(installedPackageJson, 'utf8'));
     } catch {
       // Keep the verification failure visible in the result below.
@@ -198,7 +198,7 @@ export function runSelfUpdate(
     return { success: false, updated: true, currentVersion, latestVersion, installedVersion, message };
   }
 
-  const message = `Updated androidmcp-framework from ${currentVersion} to ${installedVersion}. The previous global version was replaced. Cleared the npx execution cache at the configured npm cache directory.` + cacheWarning;
+  const message = `Updated testorbit from ${currentVersion} to ${installedVersion}. The previous global version was replaced. Cleared the npx execution cache at the configured npm cache directory.` + cacheWarning;
   log(message);
   return { success: true, updated: true, currentVersion, latestVersion, installedVersion, message };
 }

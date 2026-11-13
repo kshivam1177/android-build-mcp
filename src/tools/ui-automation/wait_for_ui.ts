@@ -3,7 +3,7 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { withErrorHandling, textResult } from '../../utils/response.js';
 import { parseUiHierarchy, cacheSnapshot } from '../../automation/uiHierarchy.js';
 import { resolveTargetAndBackend } from './_shared.js';
-import { AndroidBuildMcpError } from '../../types.js';
+import { TestOrbitFrameworkError } from '../../types.js';
 import type { ToolModule } from '../types.js';
 import type { UiNode } from '../../types.js';
 
@@ -74,7 +74,7 @@ export function register(server: McpServer) {
           previousXml = xml;
 
           if (Date.now() - start > timeoutMs) {
-            throw new AndroidBuildMcpError('TIMEOUT', `wait_for_ui timed out after ${timeoutMs}ms on ${target.id}.`);
+            throw new TestOrbitFrameworkError('TIMEOUT', `wait_for_ui timed out after ${timeoutMs}ms on ${target.id}.`);
           }
           await new Promise((resolve) => setTimeout(resolve, pollIntervalMs));
         }

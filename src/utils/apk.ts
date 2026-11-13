@@ -2,14 +2,14 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { execCommand } from './exec.js';
 import { loadConfig } from '../config/loader.js';
-import { AndroidBuildMcpError } from '../types.js';
+import { TestOrbitFrameworkError } from '../types.js';
 
 export function resolveAndroidHome(): string {
   const configured = loadConfig().paths.androidHome;
   const fromEnv = process.env.ANDROID_HOME || process.env.ANDROID_SDK_ROOT;
   const home = configured || fromEnv;
   if (!home) {
-    throw new AndroidBuildMcpError(
+    throw new TestOrbitFrameworkError(
       'ANDROID_HOME_NOT_SET',
       'Neither paths.androidHome (config.yaml) nor ANDROID_HOME/ANDROID_SDK_ROOT is set.'
     );
@@ -32,7 +32,7 @@ export function findAapt2(): string {
   const androidHome = resolveAndroidHome();
   const buildToolsDir = path.join(androidHome, 'build-tools');
   if (!fs.existsSync(buildToolsDir)) {
-    throw new AndroidBuildMcpError(
+    throw new TestOrbitFrameworkError(
       'FILE_NOT_FOUND',
       `No build-tools directory at ${buildToolsDir}. Install one with: sdkmanager "build-tools;<version>"`
     );
@@ -44,12 +44,12 @@ export function findAapt2(): string {
     .sort(compareVersions);
   const latest = versions[versions.length - 1];
   if (!latest) {
-    throw new AndroidBuildMcpError('FILE_NOT_FOUND', `${buildToolsDir} exists but has no version subdirectories.`);
+    throw new TestOrbitFrameworkError('FILE_NOT_FOUND', `${buildToolsDir} exists but has no version subdirectories.`);
   }
   const binName = process.platform === 'win32' ? 'aapt2.exe' : 'aapt2';
   const aapt2Path = path.join(buildToolsDir, latest, binName);
   if (!fs.existsSync(aapt2Path)) {
-    throw new AndroidBuildMcpError('FILE_NOT_FOUND', `aapt2 not found at ${aapt2Path}.`);
+    throw new TestOrbitFrameworkError('FILE_NOT_FOUND', `aapt2 not found at ${aapt2Path}.`);
   }
   return aapt2Path;
 }
@@ -69,12 +69,12 @@ export interface ApkInfo {
  * plugins reliably). */
 export async function inspectApk(apkPath: string): Promise<ApkInfo> {
   if (!fs.existsSync(apkPath)) {
-    throw new AndroidBuildMcpError('FILE_NOT_FOUND', `No APK at ${apkPath}. Build the variant first.`);
+    throw new TestOrbitFrameworkError('FILE_NOT_FOUND', `No APK at ${apkPath}. Build the variant first.`);
   }
   const aapt2 = findAapt2();
   const result = await execCommand(aapt2, ['dump', 'badging', apkPath], { timeoutMs: 30_000 });
   if (result.exitCode !== 0) {
-    throw new AndroidBuildMcpError(
+    throw new TestOrbitFrameworkError(
       'COMMAND_FAILED',
       `aapt2 dump badging failed for ${apkPath}: ${result.stderr.slice(0, 1000)}`
     );
@@ -86,7 +86,7 @@ export async function inspectApk(apkPath: string): Promise<ApkInfo> {
   const targetSdkMatch = out.match(/targetSdkVersion:'([^']+)'/);
 
   if (!packageMatch) {
-    throw new AndroidBuildMcpError('COMMAND_FAILED', `Could not parse package name from aapt2 output for ${apkPath}.`, {
+    throw new TestOrbitFrameworkError('COMMAND_FAILED', `Could not parse package name from aapt2 output for ${apkPath}.`, {
       stdout: out.slice(0, 2000),
     });
   }
@@ -123,7 +123,7 @@ export function moduleDirFromPath(projectRoot: string, modulePath: string): stri
 export function findBuiltApk(moduleDir: string, variant: string): string {
   const apkRoot = path.join(moduleDir, 'build', 'outputs', 'apk');
   if (!fs.existsSync(apkRoot)) {
-    throw new AndroidBuildMcpError(
+    throw new TestOrbitFrameworkError(
       'FILE_NOT_FOUND',
       `No build/outputs/apk under ${moduleDir} yet. Run build_device (or build_run_device) for variant "${variant}" first.`
     );
@@ -145,7 +145,7 @@ export function findBuiltApk(moduleDir: string, variant: string): string {
   };
   walk(apkRoot);
   if (matches.length === 0) {
-    throw new AndroidBuildMcpError(
+    throw new TestOrbitFrameworkError(
       'FILE_NOT_FOUND',
       `No .apk under ${apkRoot} matches variant "${variant}". Build it first.`
     );

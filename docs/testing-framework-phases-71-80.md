@@ -6,7 +6,7 @@ Introduce a deterministic control plane for existing Android, Flutter, iOS and W
 
 ## Delivered in this milestone
 
-- Project-local target registry at `.androidmcp-framework/device-fleet.json`.
+- Project-local target registry at `.testorbit/device-fleet.json`.
 - Versioned and schema-validated registry records for Android, Flutter, iOS and Web.
 - Register/update, list and remove operations with deterministic ordering.
 - Read-only health probes that connect to the configured driver, read capabilities and always attempt disconnect.

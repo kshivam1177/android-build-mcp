@@ -1,9 +1,14 @@
-import { createHash } from 'node:crypto';
+import { computeFingerprintStamp } from '../testorbit/core/fingerprint.js';
+import { deriveElementIds } from '../testorbit/core/element-id.js';
+import { stableSelectorOf } from '../testorbit/core/matcher.js';
+import { isInteractiveNode } from '../testorbit/core/screen-identity.js';
+import { toScreenId } from '../testorbit/domain/types.js';
+import type { StableSelector } from '../testorbit/domain/types.js';
 import type { UiNode } from '../types.js';
 
 export interface ScreenMapElement {
   id: string;
-  selector: { resourceId?: string; text?: string; contentDesc?: string; className?: string };
+  stableSelector: StableSelector;
   bounds: UiNode['bounds'];
   center: { x: number; y: number };
   normalizedCoordinates: { x: number; y: number };
@@ -17,13 +22,14 @@ export interface ScreenMapElement {
 }
 
 export interface ScreenMap {
-  schemaVersion: 1;
+  schemaVersion: 2;
   screenId: string;
   capturedAt: string;
   appPackage?: string;
   deviceId: string;
   backend: string;
   display: { width: number; height: number };
+  /** Version stamp only (B4): SHA-256 of the canonical stable-selector set. Never a run-time check. */
   fingerprint: string;
   screenshot: string;
   elements: ScreenMapElement[];
@@ -45,18 +51,18 @@ export function createScreenMap(options: {
   if (!Number.isFinite(options.width) || !Number.isFinite(options.height) || options.width <= 0 || options.height <= 0) {
     throw new Error('Screen dimensions must be positive numbers.');
   }
-  const elements = options.nodes.map((node, index): ScreenMapElement => {
-    const selector = {
-      ...(node.resourceId ? { resourceId: node.resourceId } : {}),
-      ...(node.text ? { text: node.text } : {}),
-      ...(node.contentDesc ? { contentDesc: node.contentDesc } : {}),
-      ...(node.className ? { className: node.className } : {}),
-    };
-    const identity = node.resourceId || node.contentDesc || node.text || node.className || 'element';
-    const id = identity.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(-60) || 'element';
+  // Elements are the interactive nodes only (B4 input set). Decorative
+  // containers carry no stable identity and must not fail a map.
+  const interactive = options.nodes.filter(isInteractiveNode);
+  const ids = deriveElementIds(interactive, toScreenId(options.screenId), options.nodes);
+  const elements = interactive.map((node): ScreenMapElement => {
+    const id = ids.get(node.ref);
+    if (id === undefined) {
+      throw new Error(`No stable element id derived for node ${node.ref}; this is an internal invariant failure.`);
+    }
     return {
-      id: `${id}-${index + 1}`,
-      selector,
+      id,
+      stableSelector: stableSelectorOf(node),
       bounds: node.bounds,
       center: { x: node.centerX, y: node.centerY },
       normalizedCoordinates: {
@@ -72,13 +78,8 @@ export function createScreenMap(options: {
       depth: node.depth,
     };
   });
-  const fingerprintPayload = JSON.stringify({
-    appPackage: options.nodes.find((node) => node.packageName)?.packageName ?? '',
-    display: { width: options.width, height: options.height },
-    elements: elements.map(({ selector, bounds, clickable, enabled }) => ({ selector, bounds, clickable, enabled })),
-  });
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     screenId: options.screenId,
     capturedAt: options.capturedAt ?? new Date().toISOString(),
     ...(options.nodes.find((node) => node.packageName)?.packageName
@@ -87,7 +88,7 @@ export function createScreenMap(options: {
     deviceId: options.deviceId,
     backend: options.backend,
     display: { width: options.width, height: options.height },
-    fingerprint: createHash('sha256').update(fingerprintPayload).digest('hex'),
+    fingerprint: computeFingerprintStamp(elements.map((element) => element.stableSelector)),
     screenshot: options.screenshotPath,
     elements,
   };

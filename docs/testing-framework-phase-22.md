@@ -20,7 +20,7 @@ Use `consolidate_test_reports` after the relevant test workflows, then evaluate 
 ```json
 {
   "projectPath": "/absolute/path/to/app",
-  "reportPath": ".androidmcp-framework/test-reports/2026-10-28/summary-abc123/summary.json",
+  "reportPath": ".testorbit/test-reports/2026-10-28/summary-abc123/summary.json",
   "maxAgeMinutes": 120,
   "allowSkipped": false
 }

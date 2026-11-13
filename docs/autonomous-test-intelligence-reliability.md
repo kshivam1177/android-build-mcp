@@ -15,7 +15,7 @@ It deliberately does not return raw logs, environment variables, or full saved t
 ## Safe concurrency and path handling
 
 The `runtimeSafety` helpers provide:
-- an atomic directory lock at `.androidmcp-framework/.run-lock`;
+- an atomic directory lock at `.testorbit/.run-lock`;
 - explicit lock-conflict errors rather than silently stealing an existing lock;
 - a guarded release that checks the owner run ID;
 - project-root containment checks for artifact paths;

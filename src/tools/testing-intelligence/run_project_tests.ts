@@ -24,7 +24,7 @@ function redactCommandOutput(value: string): string {
 export function register(server: McpServer) {
   return server.registerTool(toolName, {
     title: 'Run Safe Project-Native Tests',
-    description: 'Detect and reuse Flutter or Native Android test runners. Preview is the default; execution requires execute=true. Only framework-defined test tasks are invoked, never arbitrary model-provided shell commands. Writes Markdown/JSON reports plus a bounded command log under .androidmcp-framework/test-reports/.',
+    description: 'Detect and reuse Flutter or Native Android test runners. Preview is the default; execution requires execute=true. Only framework-defined test tasks are invoked, never arbitrary model-provided shell commands. Writes Markdown/JSON reports plus a bounded command log under .testorbit/test-reports/.',
     inputSchema: {
       projectPath: z.string().optional(),
       suite: z.enum(['unit', 'integration']).optional().default('unit'),

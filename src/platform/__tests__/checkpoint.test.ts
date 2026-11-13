@@ -11,7 +11,7 @@ describe('FileRunCheckpointStore', () => {
   });
 
   it('writes atomically and reloads a checkpoint', async () => {
-    directory = await fs.mkdtemp(path.join(os.tmpdir(), 'androidmcp-checkpoint-'));
+    directory = await fs.mkdtemp(path.join(os.tmpdir(), 'testorbit-checkpoint-'));
     const file = path.join(directory, 'run.json');
     const store = new FileRunCheckpointStore(file);
     const checkpoint: RunCheckpoint = {
@@ -23,7 +23,7 @@ describe('FileRunCheckpointStore', () => {
   });
 
   it('returns undefined when no checkpoint exists', async () => {
-    directory = await fs.mkdtemp(path.join(os.tmpdir(), 'androidmcp-checkpoint-'));
+    directory = await fs.mkdtemp(path.join(os.tmpdir(), 'testorbit-checkpoint-'));
     await expect(new FileRunCheckpointStore(path.join(directory, 'missing.json')).load()).resolves.toBeUndefined();
   });
 });

@@ -1,6 +1,6 @@
 {
   "$schema": "https://glama.ai/mcp/manifest.schema.json",
-  "name": "AndroidMCP Framework",
+  "name": "TestOrbit",
   "description": "MCP server and CLI for Android development and change-aware Android/Flutter testing workflows. Supports Android builds, device and emulator interaction, UI automation, logcat diagnostics, and test planning/reporting.",
   "repository": "https://github.com/kshivam1177/android-mcp-framwork",
   "license": "MIT",

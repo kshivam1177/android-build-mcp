@@ -8,7 +8,7 @@ import { runUiWorkflow } from '../uiWorkflow.js';
 describe('runUiWorkflow validation and path safety', () => {
   it('uses paths.androidCliPath from project config unless ANDROID_CLI_PATH overrides it', async () => {
     const cwd = await mkdtemp(path.join(os.tmpdir(), 'ui-workflow-config-test-'));
-    const root = path.join(cwd, '.androidmcp-framework');
+    const root = path.join(cwd, '.testorbit');
     const workflows = path.join(root, 'workflows');
     const screens = path.join(root, 'screens');
     const cliLauncher = path.join(cwd, 'fake-android-cli');
@@ -49,7 +49,7 @@ describe('runUiWorkflow validation and path safety', () => {
   it('rejects traversal paths before executing commands', async () => {
     const cwd = await mkdtemp(path.join(os.tmpdir(), 'ui-workflow-test-'));
     try {
-      await mkdir(path.join(cwd, '.androidmcp-framework', 'workflows'), { recursive: true });
+      await mkdir(path.join(cwd, '.testorbit', 'workflows'), { recursive: true });
       await expect(runUiWorkflow({ cwd, workflowFile: '../outside.json' })).rejects.toThrow(/escapes|Absolute paths/);
     } finally { await rm(cwd, { recursive: true, force: true }); }
   });
@@ -57,7 +57,7 @@ describe('runUiWorkflow validation and path safety', () => {
   it('rejects unsupported action types without launching Android CLI', async () => {
     const cwd = await mkdtemp(path.join(os.tmpdir(), 'ui-workflow-test-'));
     try {
-      const root = path.join(cwd, '.androidmcp-framework');
+      const root = path.join(cwd, '.testorbit');
       await mkdir(path.join(root, 'workflows'), { recursive: true });
       await mkdir(path.join(root, 'screens'), { recursive: true });
       await writeFile(path.join(root, 'workflows', 'invalid.json'), JSON.stringify({

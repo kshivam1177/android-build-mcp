@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { getStateDir } from './paths.js';
-import { AndroidBuildMcpError } from '../types.js';
+import { TestOrbitFrameworkError } from '../types.js';
 
 export interface TrackedProcess {
   id: string;
@@ -59,7 +59,7 @@ export function startBackgroundProcess(
 export function getTrackedProcess(id: string): TrackedProcess {
   const tracked = processes.get(id);
   if (!tracked) {
-    throw new AndroidBuildMcpError(
+    throw new TestOrbitFrameworkError(
       'COMMAND_FAILED',
       `No active background process with id "${id}". It may have already been stopped, or the server restarted.`
     );

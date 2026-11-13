@@ -21,7 +21,7 @@ const proposedStepSchema = z.object({
 export function register(server: McpServer) {
   return server.registerTool(toolName, {
     title: 'Generate a Reviewable Test Candidate',
-    description: 'Create a review-required AndroidMCP test candidate from a natural-language request, explicit acceptance criteria, and optionally proposed UI steps from a coding agent that inspected the project. Candidate steps are not trusted or executable until reviewed. This does not claim to generate Google Android CLI Journey syntax.',
+    description: 'Create a review-required TestOrbit test candidate from a natural-language request, explicit acceptance criteria, and optionally proposed UI steps from a coding agent that inspected the project. Candidate steps are not trusted or executable until reviewed. This does not claim to generate Google Android CLI Journey syntax.',
     inputSchema: {
       request: z.string().min(3).max(4000),
       acceptanceCriteria: z.array(z.string().min(1).max(500)).min(1).max(30),

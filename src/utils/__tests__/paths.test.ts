@@ -15,11 +15,11 @@ describe('project root discovery', () => {
     roots.push(root);
     const nested = path.join(root, 'packages', 'mobile', 'lib');
     fs.mkdirSync(nested, { recursive: true });
-    fs.mkdirSync(path.join(root, '.androidmcp-framework'), { recursive: true });
-    fs.writeFileSync(path.join(root, '.androidmcp-framework', 'config.yaml'), 'schemaVersion: 1\n');
+    fs.mkdirSync(path.join(root, '.testorbit'), { recursive: true });
+    fs.writeFileSync(path.join(root, '.testorbit', 'config.yaml'), 'schemaVersion: 1\n');
 
     expect(resolveProjectRoot(nested)).toBe(root);
-    expect(findProjectConfigPath(nested)).toBe(path.join(root, '.androidmcp-framework', 'config.yaml'));
+    expect(findProjectConfigPath(nested)).toBe(path.join(root, '.testorbit', 'config.yaml'));
   });
 
   it('discovers the nearest Git root and does not cross a nested repository boundary', () => {
@@ -29,8 +29,8 @@ describe('project root discovery', () => {
     const inner = path.join(outer, 'packages', 'mobile');
     fs.mkdirSync(path.join(outer, '.git'), { recursive: true });
     fs.mkdirSync(path.join(inner, '.git'), { recursive: true });
-    fs.mkdirSync(path.join(outer, '.androidmcp-framework'), { recursive: true });
-    fs.writeFileSync(path.join(outer, '.androidmcp-framework', 'config.yaml'), 'schemaVersion: 1\n');
+    fs.mkdirSync(path.join(outer, '.testorbit'), { recursive: true });
+    fs.writeFileSync(path.join(outer, '.testorbit', 'config.yaml'), 'schemaVersion: 1\n');
 
     expect(resolveProjectRoot(path.join(inner, 'lib'))).toBe(inner);
     expect(findProjectConfigPath(path.join(inner, 'lib'))).toBeNull();

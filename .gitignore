@@ -3,9 +3,9 @@ build/
 dist/
 *.log
 .DS_Store
-.androidmcp-framework/
+.testorbit/
 # Legacy project directories are ignored to avoid accidentally committing
-# local configuration while users migrate to .androidmcp-framework/.
+# local configuration while users migrate to .testorbit/.
 .android-build-mcp/
 .androidbuildmcp/
 coverage/

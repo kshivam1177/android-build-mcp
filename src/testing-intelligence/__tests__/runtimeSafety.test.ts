@@ -35,7 +35,7 @@ describe('runtime safety helpers', () => {
 
   it('keeps artifact paths inside the project root', async () => {
     const root = await tempRoot();
-    expect(resolveProjectArtifactPath(root, '.androidmcp-framework/reports/a.json')).toContain('.androidmcp-framework');
+    expect(resolveProjectArtifactPath(root, '.testorbit/reports/a.json')).toContain('.testorbit');
     expect(() => resolveProjectArtifactPath(root, '../outside.txt')).toThrow(/inside the project root/);
     expect(() => resolveProjectArtifactPath(root, path.resolve(root, '..', 'outside.txt'))).toThrow(/inside the project root/);
   });

@@ -16,7 +16,7 @@ export function register(server: McpServer) {
     toolName,
     {
       title: 'Analyze Screen Image',
-      description: 'Capture a device screenshot and semantic UI tree, optionally preprocess the image with Sharp, run OCR with Tesseract when installed, and map recognized text to element bounds and elementRef values. Saves screenshot and JSON analysis under .androidmcp-framework/artifacts.',
+      description: 'Capture a device screenshot and semantic UI tree, optionally preprocess the image with Sharp, run OCR with Tesseract when installed, and map recognized text to element bounds and elementRef values. Saves screenshot and JSON analysis under .testorbit/artifacts.',
       inputSchema: {
         targetId: z.string().optional().describe('Target device ID; defaults to the active session target.'),
         projectPath: z.string().optional().describe('Project root for saved artifacts; defaults to the current working directory.'),

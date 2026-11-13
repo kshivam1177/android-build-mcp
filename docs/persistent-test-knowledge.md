@@ -1,6 +1,6 @@
 # Persistent testing knowledge
 
-The `refresh_test_knowledge` tool builds or refreshes `.androidmcp-framework/test-knowledge.json`.
+The `refresh_test_knowledge` tool builds or refreshes `.testorbit/test-knowledge.json`.
 
 It indexes metadata for saved test cases, custom instructions, learned screens, recordings/action sequences, workflows, and test reports. It stores file paths, content hashes, sizes, modification times, and asset types—not copies of the underlying instructions or test-case contents.
 

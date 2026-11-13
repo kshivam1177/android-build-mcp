@@ -7,14 +7,14 @@ import { register as registerListTestCases } from '../list_test_cases.js';
 
 describe('Testing Intelligence: save_test_case and list_test_cases', () => {
   let tmpDir: string;
-  let saveHandler: Function;
-  let listHandler: Function;
+  let saveHandler: (...args: unknown[]) => unknown;
+  let listHandler: (...args: unknown[]) => unknown;
 
   beforeEach(() => {
     tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'mcp-test-cases-'));
 
     const mockServer = {
-      registerTool: (_name: string, _def: any, handler: Function) => {
+      registerTool: (_name: string, _def: any, handler: (...args: unknown[]) => unknown) => {
         return handler;
       },
     } as any;
@@ -29,7 +29,7 @@ describe('Testing Intelligence: save_test_case and list_test_cases', () => {
     }
   });
 
-  it('saves a test case into .androidmcp-framework/testcases/ and lists it', async () => {
+  it('saves a test case into .testorbit/testcases/ and lists it', async () => {
     const saveRes = await saveHandler({
       projectPath: tmpDir,
       id: 'TC-001',
@@ -49,7 +49,7 @@ describe('Testing Intelligence: save_test_case and list_test_cases', () => {
     });
 
     expect(saveRes.isError).toBeFalsy();
-    const testCasesDir = path.join(tmpDir, '.androidmcp-framework', 'testcases');
+    const testCasesDir = path.join(tmpDir, '.testorbit', 'testcases');
     const expectedFile = path.join(testCasesDir, 'tc-001.json');
     expect(fs.existsSync(expectedFile)).toBe(true);
 

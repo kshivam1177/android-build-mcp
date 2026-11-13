@@ -15,7 +15,7 @@ export interface TestCandidateInput {
 }
 export interface TestCandidate {
   schemaVersion: 1;
-  format: 'androidmcp-test-candidate';
+  format: 'testorbit-test-candidate';
   id: string;
   title: string;
   platform: TestCandidateInput['platform'];
@@ -62,7 +62,7 @@ export function createTestCandidate(input: TestCandidateInput): TestCandidate {
         reviewRequired: true as const,
       }));
   return {
-    schemaVersion: 1, format: 'androidmcp-test-candidate', id: 'candidate-' + slug(request),
+    schemaVersion: 1, format: 'testorbit-test-candidate', id: 'candidate-' + slug(request),
     title: request.slice(0, 120), platform: input.platform, request,
     reviewRequired: true, executable: false, acceptanceCriteria: criteria, steps,
     notes: [
@@ -70,7 +70,7 @@ export function createTestCandidate(input: TestCandidateInput): TestCandidate {
         ? 'Proposed steps were supplied by the caller and are still unverified; review selectors, actions, and assertions against the source project before saving as an executable test case.'
         : 'No proposed interactions were supplied, so the steps are placeholders rather than an executable test script.',
       'This candidate is intentionally non-executable until a human reviews and saves it as a test case.',
-      'This format is AndroidMCP review-candidate JSON, not Google Android CLI Journey syntax.',
+      'This format is TestOrbit review-candidate JSON, not Google Android CLI Journey syntax.',
     ],
   };
 }

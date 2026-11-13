@@ -19,7 +19,7 @@ export function register(server: McpServer) {
     {
       title: 'Snapshot UI',
       description:
-        'Capture the current Android accessibility hierarchy and cache short-lived elementRefs. By default, saves the raw hierarchy and complete parsed element tree to .androidmcp-framework/artifacts/snapshots/ and returns a compact summary to avoid filling the agent context. Set includeElements=true to return the elements inline.',
+        'Capture the current Android accessibility hierarchy and cache short-lived elementRefs. By default, saves the raw hierarchy and complete parsed element tree to .testorbit/artifacts/snapshots/ and returns a compact summary to avoid filling the agent context. Set includeElements=true to return the elements inline.',
       inputSchema: {
         targetId: z.string().optional(),
         projectPath: z.string().optional().describe('Project root; auto-discovers the nearest framework config or Git root when omitted.'),
