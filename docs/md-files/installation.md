@@ -8,34 +8,34 @@
 - A Gradle wrapper in your Android project (recommended) or Gradle on `PATH`
 - Optional: Google's Android CLI installed separately for the `android-cli` workflow
 
-AndroidMCP Framework itself does not require Python. Run `androidmcp-framework doctor` to check the local Android toolchain.
+TestOrbit itself does not require Python. Run `testorbit doctor` to check the local Android toolchain.
 
 ## Install
 
 ```bash
-npm install -g androidmcp-framework@latest
+npm install -g testorbit@latest
 ```
 
 Verify:
 
 ```bash
-androidmcp-framework --help
-androidmcp-framework doctor
+testorbit --help
+testorbit doctor
 ```
 
 ### Run without installing globally
 
 ```bash
-npx -y androidmcp-framework@latest mcp
+npx -y testorbit@latest mcp
 ```
 
 ## Updating
 
 ```bash
-npm install -g androidmcp-framework@latest
+npm install -g testorbit@latest
 ```
 
-When using the `npx -y androidmcp-framework@latest` form in your MCP client config, npx re-resolves the package version according to its normal cache behavior.
+When using the `npx -y testorbit@latest` form in your MCP client config, npx re-resolves the package version according to its normal cache behavior.
 
 ## Next
 

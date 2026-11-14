@@ -6,13 +6,13 @@ export const SUPPORTED_AGENTS = ['claude', 'codex', 'gemini', 'antigravity', 'cu
 export type CodingAgent = typeof SUPPORTED_AGENTS[number];
 
 const AGENTS: Record<Exclude<CodingAgent, 'auto'>, { label: string; markers: string[]; skillDir: string }> = {
-  claude: { label: 'Claude Code', markers: ['.claude'], skillDir: '.claude/skills/androidmcp-framework' },
-  codex: { label: 'OpenAI Codex', markers: ['.agents', '.codex'], skillDir: '.agents/skills/androidmcp-framework' },
-  gemini: { label: 'Gemini CLI', markers: ['.gemini'], skillDir: '.gemini/skills/androidmcp-framework' },
-  antigravity: { label: 'Antigravity', markers: ['.agent'], skillDir: '.agent/skills/androidmcp-framework' },
-  cursor: { label: 'Cursor', markers: ['.cursor'], skillDir: '.cursor/skills/androidmcp-framework' },
-  copilot: { label: 'GitHub Copilot', markers: ['.github'], skillDir: '.github/skills/androidmcp-framework' },
-  other: { label: 'Other / generic agent', markers: ['.agents'], skillDir: '.agents/skills/androidmcp-framework' },
+  claude: { label: 'Claude Code', markers: ['.claude'], skillDir: '.claude/skills/testorbit' },
+  codex: { label: 'OpenAI Codex', markers: ['.agents', '.codex'], skillDir: '.agents/skills/testorbit' },
+  gemini: { label: 'Gemini CLI', markers: ['.gemini'], skillDir: '.gemini/skills/testorbit' },
+  antigravity: { label: 'Antigravity', markers: ['.agent'], skillDir: '.agent/skills/testorbit' },
+  cursor: { label: 'Cursor', markers: ['.cursor'], skillDir: '.cursor/skills/testorbit' },
+  copilot: { label: 'GitHub Copilot', markers: ['.github'], skillDir: '.github/skills/testorbit' },
+  other: { label: 'Other / generic agent', markers: ['.agents'], skillDir: '.agents/skills/testorbit' },
 };
 
 export function detectCodingAgents(root: string): Array<Exclude<CodingAgent, 'auto'>> {
@@ -30,19 +30,19 @@ export function getSkillPath(root: string, agent: Exclude<CodingAgent, 'auto'>):
 export function renderSkill(agent: Exclude<CodingAgent, 'auto'>): string {
   const label = AGENTS[agent].label;
   return `---
-name: androidmcp-framework
-description: Use AndroidMCP Framework to inspect, build, debug, and test Android or Flutter projects. Apply when working on app changes, UI flows, test planning, device validation, or test evidence.
+name: testorbit
+description: Use TestOrbit to inspect, build, debug, and test Android or Flutter projects. Apply when working on app changes, UI flows, test planning, device validation, or test evidence.
 ---
 
-# AndroidMCP Framework
+# TestOrbit
 
 This skill is configured for ${label}. Use the framework's existing CLI and MCP tools instead of inventing a parallel Android automation stack.
 
 ## Before changing code
 1. Identify whether this repository is native Android, Flutter, or a multi-package workspace.
 2. Read project instructions and existing tests before proposing changes.
-3. Run \`androidmcp-framework doctor\` when toolchain or device readiness is uncertain.
-4. Check \`.androidmcp-framework/\` for project setup, custom test instructions, saved test cases, and previous reports.
+3. Run \`testorbit doctor\` when toolchain or device readiness is uncertain.
+4. Check \`.testorbit/\` for project setup, custom test instructions, saved test cases, and previous reports.
 
 ## After changing code
 1. Use change-aware test planning and project-native test suites where available.
@@ -53,9 +53,9 @@ This skill is configured for ${label}. Use the framework's existing CLI and MCP 
 6. Review the final report and explain any missing or blocked validation.
 
 ## Evidence and reports
-- Keep framework-generated data under \`.androidmcp-framework/\`.
-- Reports belong under \`.androidmcp-framework/test-reports/YYYY-MM-DD/HHmmss/\`.
-- Screenshots and hierarchy snapshots belong under \`.androidmcp-framework/artifacts/\`.
+- Keep framework-generated data under \`.testorbit/\`.
+- Reports belong under \`.testorbit/test-reports/YYYY-MM-DD/HHmmss/\`.
+- Screenshots and hierarchy snapshots belong under \`.testorbit/artifacts/\`.
 - Verify report freshness and Git HEAD provenance before treating reports as current evidence.
 - Never overwrite user-authored instructions, test cases, or reports without explicit approval.
 

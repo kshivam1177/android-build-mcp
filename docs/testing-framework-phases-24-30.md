@@ -12,7 +12,7 @@ The tool reads an existing LCOV file (default: `coverage/lcov.info`), maps Git-c
 
 ## Phase 26 — Flaky-test signals
 
-Historical recognized report JSON files under `.androidmcp-framework/test-reports/` are scanned with a configurable cap. A test is marked potentially flaky only when the same normalized name has at least one explicit pass and one explicit failure. This is a signal for review, not proof of nondeterminism; renamed tests and inconsistent naming can reduce detection quality.
+Historical recognized report JSON files under `.testorbit/test-reports/` are scanned with a configurable cap. A test is marked potentially flaky only when the same normalized name has at least one explicit pass and one explicit failure. This is a signal for review, not proof of nondeterminism; renamed tests and inconsistent naming can reduce detection quality.
 
 ## Phase 27 — Baseline regression comparison
 

@@ -49,7 +49,7 @@ Supported assertion kinds: \`exists\`, \`visible\`, \`enabled\`, \`textEquals\`,
 - AI proposals are advisory and schema-checked; they are not approvals.
 - Action-risk policy requires declared risk metadata from a planner/caller. The framework does not infer destructive intent from labels.
 - A failed action is never automatically replayed.
-- Reports are written beneath \`.androidmcp-framework/test-reports/YYYY-MM-DD/<time-run-id>/\`.
+- Reports are written beneath \`.testorbit/test-reports/YYYY-MM-DD/<time-run-id>/\`.
 - Screenshots and snapshots are retained as evidence. Reports redact common credential formats and supplied runtime variable values.
 
 ## Keyboard, app lifecycle and native permission prompts

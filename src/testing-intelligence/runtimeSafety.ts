@@ -81,7 +81,7 @@ export interface ProjectRunLock {
  */
 export async function acquireProjectRunLock(projectRoot: string, runId: string = randomUUID()): Promise<ProjectRunLock> {
   const root = path.resolve(projectRoot);
-  const lockPath = path.join(root, '.androidmcp-framework', '.run-lock');
+  const lockPath = path.join(root, '.testorbit', '.run-lock');
   await fs.mkdir(path.dirname(lockPath), { recursive: true });
   try {
     await fs.mkdir(lockPath);
@@ -89,7 +89,7 @@ export async function acquireProjectRunLock(projectRoot: string, runId: string =
     if ((error as NodeJS.ErrnoException).code === 'EEXIST') {
       let owner = 'owner metadata unavailable';
       try { owner = await fs.readFile(path.join(lockPath, 'owner.json'), 'utf8'); } catch { /* concurrent creator may still be writing */ }
-      throw Object.assign(new Error('Another AndroidMCP run holds the project lock. Inspect .androidmcp-framework/.run-lock before removing it. ' + redactDiagnosticText(owner)), { code: 'LOCK_CONFLICT' });
+      throw Object.assign(new Error('Another TestOrbit run holds the project lock. Inspect .testorbit/.run-lock before removing it. ' + redactDiagnosticText(owner)), { code: 'LOCK_CONFLICT' });
     }
     throw error;
   }

@@ -13,7 +13,7 @@ describe('cross-platform artifact retention', () => {
   it('selects only old generated suite runs with a regular evidence manifest', async () => {
     const root = await fs.mkdtemp(path.join(os.tmpdir(), 'amf-retention-'));
     roots.push(root);
-    const reports = path.join(root, '.androidmcp-framework', 'test-reports');
+    const reports = path.join(root, '.testorbit', 'test-reports');
     const oldDate = new Date(Date.now() - 100 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
     const generated = path.join(reports, oldDate, '10-20-30-cross-platform-suite-1234abcd');
     const noManifest = path.join(reports, oldDate, '10-20-30-cross-platform-suite-deadbeef');

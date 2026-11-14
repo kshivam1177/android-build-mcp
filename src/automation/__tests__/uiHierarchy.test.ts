@@ -32,6 +32,28 @@ describe('parseUiHierarchy', () => {
     expect(nodes[1]?.text).toBe('Settings > Wi-Fi');
   });
 
+  it('emits parentRef and ancestorChain for every node', () => {
+    const nodes = parseUiHierarchy(SAMPLE_XML);
+    expect(nodes[0]?.parentRef).toBeUndefined();
+    expect(nodes[0]?.ancestorChain).toEqual([]);
+    expect(nodes[1]?.parentRef).toBe('e1');
+    expect(nodes[1]?.ancestorChain).toEqual(['e1']);
+    expect(nodes[2]?.parentRef).toBe('e1');
+    expect(nodes[2]?.ancestorChain).toEqual(['e1']);
+  });
+
+  it('builds multi-level ancestor chains in document order', () => {
+    const xml = '<hierarchy rotation="0">'
+      + '<node index="0" class="android.widget.FrameLayout" bounds="[0,0][1080,2400]">'
+      + '<node index="0" class="android.widget.LinearLayout" bounds="[0,0][1080,2400]">'
+      + '<node index="0" resource-id="com.example.app:id/deep" class="android.widget.Button" bounds="[0,0][100,50]"></node>'
+      + '</node></node></hierarchy>';
+    const nodes = parseUiHierarchy(xml);
+    expect(nodes).toHaveLength(3);
+    expect(nodes[2]?.parentRef).toBe('e2');
+    expect(nodes[2]?.ancestorChain).toEqual(['e1', 'e2']);
+  });
+
   it('parses checkable/checked and content-desc for a switch', () => {
     const nodes = parseUiHierarchy(SAMPLE_XML);
     const toggle = nodes[2];

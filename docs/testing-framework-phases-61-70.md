@@ -6,18 +6,18 @@ Close the gap between the existing single-definition cross-platform engine and p
 
 ## Included in this milestone
 
-- The new run_cross_platform_suite tool discovers JSON definitions in .androidmcp-framework/cross-platform-tests/ or a validated project-relative directory.
+- The new run_cross_platform_suite tool discovers JSON definitions in .testorbit/cross-platform-tests/ or a validated project-relative directory.
 - The complete selected suite is parsed and validated before any device or browser action begins. Duplicate test IDs and missing requested IDs block execution.
 - Preview is the default. execute=true is required before connecting to devices, simulators or browsers.
 - Definitions execute sequentially to avoid cross-definition target contention. Each definition may use bounded parallel platform execution (1–4 targets) through the existing engine.
-- Per-definition checkpoints are written below .androidmcp-framework/test-reports/.runs/cross-platform/.
+- Per-definition checkpoints are written below .testorbit/test-reports/.runs/cross-platform/.
 - One JSON, Markdown and JUnit suite report is produced, with redacted test variables and per-platform/step outcomes.
 - The final gate distinguishes pass, fail and incomplete. A pass requires every selected definition to finish successfully, a valid Git HEAD, a clean working tree, a SHA-256 manifest of the exact selected definition files, and confirmation that those files did not change during execution. This explicitly binds ignored project-local test definitions to the report.
 - stopOnFailure is opt-in; by default the suite continues so the report captures independent failures.
 
 ## Save a test definition
 
-Create .androidmcp-framework/cross-platform-tests/login-smoke.json:
+Create .testorbit/cross-platform-tests/login-smoke.json:
 
     {
       "schemaVersion": "1.0",

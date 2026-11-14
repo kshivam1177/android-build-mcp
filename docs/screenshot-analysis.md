@@ -1,6 +1,6 @@
 # Screenshot OCR and coordinate analysis
 
-AndroidMCP Framework exposes `analyze_screenshot` and `fill_form` in the `ui-automation` workflow. `fill_form` is ported from the dev branch and resolves fields by semantic selectors, failing safely when a selector is missing or ambiguous. It captures the selected Android target's screenshot, runs local Tesseract OCR, and returns text with pixel-space bounding boxes and center points as JSON.
+TestOrbit exposes `analyze_screenshot` and `fill_form` in the `ui-automation` workflow. `fill_form` is ported from the dev branch and resolves fields by semantic selectors, failing safely when a selector is missing or ambiguous. It captures the selected Android target's screenshot, runs local Tesseract OCR, and returns text with pixel-space bounding boxes and center points as JSON.
 
 ## Requirements
 

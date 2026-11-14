@@ -28,7 +28,7 @@ describe('coding-agent skill generation', () => {
     const result = generateAgentSkill(root, 'claude');
     expect(result.created).toBe(true);
     expect(result.filePath).toBe(getSkillPath(root, 'claude'));
-    expect(fs.readFileSync(result.filePath, 'utf8')).toContain('name: androidmcp-framework');
+    expect(fs.readFileSync(result.filePath, 'utf8')).toContain('name: testorbit');
     expect(fs.readFileSync(result.filePath, 'utf8')).toContain('Do not claim an emulator/device test passed');
   });
 
@@ -45,7 +45,7 @@ describe('coding-agent skill generation', () => {
   it('renders agent-neutral testing guidance', () => {
     const content = renderSkill('antigravity');
     expect(content).toContain('Antigravity');
-    expect(content).toContain('.androidmcp-framework/test-reports/');
+    expect(content).toContain('.testorbit/test-reports/');
     expect(content).toContain('bounded');
   });
 });

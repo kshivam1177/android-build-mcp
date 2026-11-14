@@ -30,7 +30,7 @@ describe('persistent test knowledge', () => {
   it('writes manifests atomically and reads them back', async () => {
     const root = await mkdtemp(path.join(os.tmpdir(), 'amf-knowledge-'));
     try {
-      const file = path.join(root, '.androidmcp-framework', 'test-knowledge.json');
+      const file = path.join(root, '.testorbit', 'test-knowledge.json');
       const manifest = {
         schemaVersion: 1 as const, generatedAt: new Date(0).toISOString(), projectRoot: root,
         assets: [], changesSinceLastRefresh: { added: [], changed: [], removed: [] },
