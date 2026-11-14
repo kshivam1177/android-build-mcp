@@ -2,7 +2,7 @@ import { execCommand } from './exec.js';
 import type { ExecOptions } from './exec.js';
 import { loadConfig } from '../config/loader.js';
 import { getEffectiveSessionDefaults } from '../session/defaults.js';
-import { AndroidBuildMcpError } from '../types.js';
+import { TestOrbitFrameworkError } from '../types.js';
 import type { TargetInfo } from '../types.js';
 
 export function getAdbPath(): string {
@@ -13,10 +13,10 @@ export async function runAdb(args: string[], options: Pick<ExecOptions, 'timeout
   try {
     return await execCommand(getAdbPath(), args, options);
   } catch (err) {
-    if (err instanceof AndroidBuildMcpError && err.code === 'COMMAND_FAILED' && /not found on PATH/.test(err.message)) {
-      throw new AndroidBuildMcpError(
+    if (err instanceof TestOrbitFrameworkError && err.code === 'COMMAND_FAILED' && /not found on PATH/.test(err.message)) {
+      throw new TestOrbitFrameworkError(
         'ADB_NOT_FOUND',
-        `adb was not found (looked for "${getAdbPath()}"). Set paths.adbPath in .androidmcp-framework/config.yaml, or add Android SDK platform-tools to PATH.`
+        `adb was not found (looked for "${getAdbPath()}"). Set paths.adbPath in .testorbit/config.yaml, or add Android SDK platform-tools to PATH.`
       );
     }
     throw err;
@@ -52,13 +52,16 @@ function parseDevicesOutput(stdout: string): TargetInfo[] {
       const idx = part.indexOf(':');
       if (idx > 0) info[part.slice(0, idx)] = part.slice(idx + 1);
     }
+    const product = info.product;
+    const model = info.model;
+    const transportId = info.transport_id;
     targets.push({
       id,
       type: id.startsWith('emulator-') ? 'emulator' : 'physical',
       state,
-      product: info.product,
-      model: info.model,
-      transportId: info.transport_id,
+      ...(product !== undefined ? { product } : {}),
+      ...(model !== undefined ? { model } : {}),
+      ...(transportId !== undefined ? { transportId } : {}),
     });
   }
   return targets;
@@ -102,14 +105,14 @@ export async function resolveTarget(options: ResolveTargetOptions = {}): Promise
   if (requested) {
     const match = targets.find((t) => t.id === requested);
     if (!match) {
-      throw new AndroidBuildMcpError(
+      throw new TestOrbitFrameworkError(
         'TARGET_NOT_FOUND',
         `No connected target with id "${requested}". Run list_devices to see what's connected.`,
         { requested, connected: targets.map((t) => t.id) }
       );
     }
     if (match.state !== 'device') {
-      throw new AndroidBuildMcpError(
+      throw new TestOrbitFrameworkError(
         'TARGET_OFFLINE',
         `Target "${requested}" is connected but in state "${match.state}", not "device".`,
         { requested, state: match.state }
@@ -120,13 +123,13 @@ export async function resolveTarget(options: ResolveTargetOptions = {}): Promise
 
   const ready = targets.filter((t) => t.state === 'device');
   if (ready.length === 0) {
-    throw new AndroidBuildMcpError(
+    throw new TestOrbitFrameworkError(
       'NO_TARGET_CONNECTED',
       'No emulator or physical device is connected and ready. Boot an emulator or plug in a device with USB debugging enabled, then retry.'
     );
   }
   if (ready.length > 1) {
-    throw new AndroidBuildMcpError(
+    throw new TestOrbitFrameworkError(
       'MULTIPLE_TARGETS_CONNECTED',
       `${ready.length} targets are connected. Pass targetId explicitly, or pin one with session_set_defaults.`,
       { candidates: ready.map((t) => ({ id: t.id, type: t.type, avdName: t.avdName, model: t.model })) }
@@ -134,7 +137,7 @@ export async function resolveTarget(options: ResolveTargetOptions = {}): Promise
   }
   const [only] = ready;
   if (!only) {
-    throw new AndroidBuildMcpError('NO_TARGET_CONNECTED', 'No emulator or physical device is connected and ready.');
+    throw new TestOrbitFrameworkError('NO_TARGET_CONNECTED', 'No emulator or physical device is connected and ready.');
   }
   return only;
 }

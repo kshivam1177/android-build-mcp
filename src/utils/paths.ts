@@ -2,7 +2,7 @@ import os from 'node:os';
 import path from 'node:path';
 import fs from 'node:fs';
 
-export const PROJECT_CONFIG_DIR = '.androidmcp-framework';
+export const PROJECT_CONFIG_DIR = '.testorbit';
 const LEGACY_CONFIG_DIRS = ['.android-build-mcp', '.androidbuildmcp'] as const;
 
 /**
@@ -14,11 +14,11 @@ export function getStateDir(): string {
   const platform = process.platform;
   let base: string;
   if (platform === 'darwin') {
-    base = path.join(os.homedir(), 'Library', 'Application Support', 'androidmcp-framework');
+    base = path.join(os.homedir(), 'Library', 'Application Support', 'testorbit');
   } else if (platform === 'win32') {
-    base = path.join(process.env.APPDATA ?? path.join(os.homedir(), 'AppData', 'Roaming'), 'androidmcp-framework');
+    base = path.join(process.env.APPDATA ?? path.join(os.homedir(), 'AppData', 'Roaming'), 'testorbit');
   } else {
-    base = path.join(process.env.XDG_STATE_HOME ?? path.join(os.homedir(), '.local', 'state'), 'androidmcp-framework');
+    base = path.join(process.env.XDG_STATE_HOME ?? path.join(os.homedir(), '.local', 'state'), 'testorbit');
   }
   fs.mkdirSync(base, { recursive: true });
   return base;

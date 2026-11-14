@@ -18,7 +18,7 @@ export function register(server: McpServer) {
     {
       title: 'Screenshot',
       description:
-        'Capture the current screen and always save it under .androidmcp-framework/artifacts/screenshots/<targetId>-<timestamp>.png before returning the image. The text response includes the absolute saved path.',
+        'Capture the current screen and always save it under .testorbit/artifacts/screenshots/<targetId>-<timestamp>.png before returning the image. The text response includes the absolute saved path.',
       inputSchema: {
         targetId: z.string().optional(),
         projectPath: z.string().optional().describe('Project root; auto-discovers the nearest framework config or Git root when omitted.'),

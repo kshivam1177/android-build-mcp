@@ -4,7 +4,7 @@ import { withErrorHandling, textResult } from '../../utils/response.js';
 import { listTargets, runAdbForTarget } from '../../utils/adb.js';
 import { startBackgroundProcess } from '../../utils/processRegistry.js';
 import { findEmulatorBinary, waitForNewEmulator } from './_shared.js';
-import { AndroidBuildMcpError } from '../../types.js';
+import { TestOrbitFrameworkError } from '../../types.js';
 import type { ToolModule } from '../types.js';
 
 export const toolName = 'erase_emulator';
@@ -32,7 +32,7 @@ export function register(server: McpServer) {
           await runAdbForTarget(running.id, ['emu', 'kill'], { timeoutMs: 15_000 });
           await new Promise((resolve) => setTimeout(resolve, 3_000));
         } catch {
-          throw new AndroidBuildMcpError('COMMAND_FAILED', `Could not stop the running instance of "${args.avdName}" (${running.id}) before wiping.`);
+          throw new TestOrbitFrameworkError('COMMAND_FAILED', `Could not stop the running instance of "${args.avdName}" (${running.id}) before wiping.`);
         }
       }
 

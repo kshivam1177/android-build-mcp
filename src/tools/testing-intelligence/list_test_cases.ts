@@ -15,7 +15,7 @@ export function register(server: McpServer) {
     {
       title: 'List Test Cases',
       description:
-        'List all structured test cases stored in .androidmcp-framework/testcases/, optionally filtered by category.',
+        'List all structured test cases stored in .testorbit/testcases/, optionally filtered by category.',
       inputSchema: {
         projectPath: z.string().optional().describe('Project root; defaults to cwd.'),
         category: z.string().optional().describe('Optional category filter, e.g. "cart", "checkout", "smoke".'),
@@ -27,7 +27,7 @@ export function register(server: McpServer) {
       const dir = path.join(getConfigDir(root), 'testcases');
 
       if (!fs.existsSync(dir)) {
-        return textResult('No test cases directory found in .androidmcp-framework/testcases/.', {
+        return textResult('No test cases directory found in .testorbit/testcases/.', {
           count: 0,
           testCases: [],
         });
@@ -61,7 +61,7 @@ export function register(server: McpServer) {
 
       const summary =
         testCases.length === 0
-          ? 'No matching test cases found in .androidmcp-framework/testcases/.'
+          ? 'No matching test cases found in .testorbit/testcases/.'
           : `Found ${testCases.length} test case(s) in ${dir}:\n` +
             testCases
               .map((tc) => `• [${tc.id}] ${tc.title} (${tc.category}, ${tc.stepCount} steps)`)

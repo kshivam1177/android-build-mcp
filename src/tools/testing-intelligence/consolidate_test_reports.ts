@@ -33,7 +33,7 @@ async function findReports(root: string, current = root, results: string[] = [])
 export function register(server: McpServer) {
   return server.registerTool(toolName, {
     title: 'Consolidate Test Reports for CI',
-    description: 'Consolidate recognized AndroidMCP workflow, replay, saved-test-case, and standard report JSON files into a truthful Markdown summary, machine-readable JSON, and JUnit XML. Only explicit passing statuses count as passed; missing outcomes become skipped and an empty report set is marked no-data.',
+    description: 'Consolidate recognized TestOrbit workflow, replay, saved-test-case, and standard report JSON files into a truthful Markdown summary, machine-readable JSON, and JUnit XML. Only explicit passing statuses count as passed; missing outcomes become skipped and an empty report set is marked no-data.',
     inputSchema: {
       projectPath: z.string().optional(),
       since: z.string().datetime().optional().describe('Optional ISO timestamp; include reports whose file modification time is at or after this instant.'),

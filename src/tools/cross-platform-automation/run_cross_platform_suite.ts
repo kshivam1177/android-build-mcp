@@ -63,7 +63,7 @@ function definitionManifest(items: Array<{ file: string; sha256: string }>): str
 export function register(server: McpServer) {
   return server.registerTool(toolName, {
     title: 'Run Saved Cross-Platform Test Suite',
-    description: 'Validate and optionally execute every saved cross-platform test definition in .androidmcp-framework/cross-platform-tests. Validates the complete suite before device actions, executes definitions sequentially with bounded per-test platform concurrency, persists checkpoints and one provenance-aware suite report.',
+    description: 'Validate and optionally execute every saved cross-platform test definition in .testorbit/cross-platform-tests. Validates the complete suite before device actions, executes definitions sequentially with bounded per-test platform concurrency, persists checkpoints and one provenance-aware suite report.',
     inputSchema: {
       projectPath: z.string().optional(),
       suitePath: z.string().optional(),
@@ -76,7 +76,7 @@ export function register(server: McpServer) {
     annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: false, openWorldHint: true }
   }, withErrorHandling(async (args: { projectPath?: string; suitePath?: string; execute?: boolean; maxConcurrency?: number; runTimeoutMs?: number; testIds?: string[]; stopOnFailure?: boolean }) => {
     const root = resolveProjectRoot(path.resolve(args.projectPath ?? process.cwd()));
-    const suiteDirectory = path.resolve(root, args.suitePath ?? '.androidmcp-framework/cross-platform-tests');
+    const suiteDirectory = path.resolve(root, args.suitePath ?? '.testorbit/cross-platform-tests');
     const relative = path.relative(root, suiteDirectory);
     if (relative.startsWith('..') || path.isAbsolute(relative)) throw new Error('suitePath must remain inside the selected project root.');
     const definitions = await loadDefinitions(suiteDirectory);
@@ -87,7 +87,7 @@ export function register(server: McpServer) {
     const definitionManifestSha256 = definitionManifest(selected);
     const runId = randomUUID();
     const now = new Date();
-    const reportDirectory = path.join(root, '.androidmcp-framework', 'test-reports', now.toISOString().slice(0, 10), now.toISOString().slice(11, 19).replace(/:/g, '-') + '-cross-platform-suite-' + runId.slice(0, 8));
+    const reportDirectory = path.join(root, '.testorbit', 'test-reports', now.toISOString().slice(0, 10), now.toISOString().slice(11, 19).replace(/:/g, '-') + '-cross-platform-suite-' + runId.slice(0, 8));
     const plan = selected.map(({ file, definition }) => ({ file, id: definition.id, name: definition.name, platforms: definition.platforms, steps: definition.steps.length, targets: definition.targets ?? {} }));
     if (!args.execute) {
       const preview = { mode: 'plan-only', runId, projectRoot: root, suiteDirectory: relative, definitionCount: selected.length, plan, definitionManifestSha256, definitionFiles: selected.map(({ file, sha256 }) => ({ file, sha256 })), gitHeadSha: state.gitHeadSha, workingTreeClean: state.workingTreeClean, executionRequires: 'Review every test definition and target, then set execute=true.' };
@@ -98,7 +98,7 @@ export function register(server: McpServer) {
     const outcomes: Array<{ id: string; file: string; name: string; success: boolean; cancelled: boolean; timedOut: boolean; durationMs: number; summary: unknown; platforms: unknown[]; error?: string }> = [];
     const junitSuites: string[] = [];
     for (const item of selected) {
-      const checkpointPath = path.join(root, '.androidmcp-framework', 'test-reports', '.runs', 'cross-platform', runId + '-' + item.definition.id + '.json');
+      const checkpointPath = path.join(root, '.testorbit', 'test-reports', '.runs', 'cross-platform', runId + '-' + item.definition.id + '.json');
       try {
         const result = await new AutomationEngine({ drivers: createPlatformDrivers(), maxConcurrency: args.maxConcurrency }).run(item.definition, {
           maxConcurrency: args.maxConcurrency,

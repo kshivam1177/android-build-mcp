@@ -21,7 +21,7 @@ const CandidateStep = z.object({
 });
 const CandidateSchema = z.object({
   schemaVersion: z.literal(1),
-  format: z.literal('androidmcp-test-candidate'),
+  format: z.literal('testorbit-test-candidate'),
   id: z.string().min(1),
   title: z.string().min(1),
   platform: z.enum(['android', 'flutter', 'cross-platform']),
@@ -76,7 +76,7 @@ export function register(server: McpServer) {
     description: 'Validate a saved generated test candidate and optionally promote it into the approved test-case directory. Approval is explicit; placeholders, unreviewed steps, missing targets, inputs, outcomes, or malformed candidate schemas block promotion. This tool does not execute tests or claim selectors were verified on a device.',
     inputSchema: {
       projectPath: z.string().optional(),
-      candidateId: z.string().min(1).max(100).regex(/^[a-zA-Z0-9_-]+$/).describe('Candidate filename stem under .androidmcp-framework/generated-tests; path traversal is not accepted.'),
+      candidateId: z.string().min(1).max(100).regex(/^[a-zA-Z0-9_-]+$/).describe('Candidate filename stem under .testorbit/generated-tests; path traversal is not accepted.'),
       approve: z.boolean().optional().default(false).describe('Must be true to promote a valid candidate into testcases.'),
       relatedFiles: z.array(z.string().min(1).max(500)).max(100).optional().default([]).describe('Optional source paths explicitly reviewed by the caller; not inferred automatically.'),
     },

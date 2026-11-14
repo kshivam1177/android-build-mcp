@@ -1,0 +1,1 @@
+{"compilerOptions":{"exactOptionalPropertyTypes":true,"noEmit":true},"exclude":["node_modules","build"],"extends":"./tsconfig.json","include":["src/testorbit/**/*.ts"]}

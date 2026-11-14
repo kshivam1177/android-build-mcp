@@ -20,11 +20,12 @@ import runUiWorkflow from './run_ui_workflow.js';
 import waitForUi from './wait_for_ui.js';
 import batch from './batch.js';
 import touch from './touch.js';
-import learnScreen from './learn_screen.js';
+import learnScreen from './orbit_learn_screen.js';
 import interactScreen from './interact_screen.js';
-import startRecording from './start_recording.js';
-import stopRecording from './stop_recording.js';
-import replayRecording from './replay_recording.js';
+import startRecording from './orbit_start_recording.js';
+import stopRecording from './orbit_stop_recording.js';
+import replayRecording from './orbit_replay_recording.js';
+import detectVariant from './orbit_detect_variant.js';
 import type { ToolModule } from '../types.js';
 
 export const uiAutomationTools: ToolModule[] = [
@@ -52,6 +53,7 @@ export const uiAutomationTools: ToolModule[] = [
   touch,
   learnScreen,
   interactScreen,
+  detectVariant,
   startRecording,
   stopRecording,
   replayRecording,

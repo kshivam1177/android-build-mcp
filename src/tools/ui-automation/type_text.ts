@@ -3,7 +3,8 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { withErrorHandling, textResult } from '../../utils/response.js';
 import { resolveElementRef } from '../../automation/uiHierarchy.js';
 import { resolveTargetAndBackend, getScreenSize } from './_shared.js';
-import { isRecording, recordAction, type RecordedSelector } from '../../automation/recorder.js';
+import { isRecording, type RecordedSelector } from '../../automation/recorder.js';
+import { finishRecordingProbe, startRecordingProbe } from './recording-probe.js';
 import type { ToolModule } from '../types.js';
 
 export const toolName = 'type_text';
@@ -27,6 +28,7 @@ export function register(server: McpServer) {
       const stepStart = Date.now();
       const { target, backend } = await resolveTargetAndBackend(args.targetId);
       let selector: RecordedSelector | undefined;
+      let focus: { x: number; y: number } | undefined;
       if (args.elementRef) {
         const node = resolveElementRef(target.id, args.elementRef);
         selector = {
@@ -35,12 +37,14 @@ export function register(server: McpServer) {
           ...(node.contentDesc ? { contentDesc: node.contentDesc } : {}),
           ...(node.className ? { className: node.className } : {}),
         };
-        await backend.tap(target.id, node.centerX, node.centerY);
+        focus = { x: node.centerX, y: node.centerY };
       }
+      const probe = await startRecordingProbe(backend, target.id);
+      if (focus !== undefined) await backend.tap(target.id, focus.x, focus.y);
       await backend.typeText(target.id, args.text);
       if (isRecording(target.id)) {
         const screenSize = await getScreenSize(target.id);
-        recordAction({ type: 'type_text', durationMs: Date.now() - stepStart, text: args.text, selector, screenSize });
+        await finishRecordingProbe(probe, target.id, { type: 'type_text', durationMs: Date.now() - stepStart, text: args.text, selector, screenSize }, selector);
       }
       return textResult(`Typed text into ${target.id}.`, { target, length: args.text.length });
     })

@@ -3,7 +3,7 @@ import path from 'node:path';
 import { resolveProjectRoot } from '../../utils/paths.js';
 import { findFlutterProjectRoot, flutterAndroidRoot } from '../../utils/projectDiscovery.js';
 import { getEffectiveSessionDefaults } from '../../session/defaults.js';
-import { AndroidBuildMcpError } from '../../types.js';
+import { TestOrbitFrameworkError } from '../../types.js';
 
 export interface ResolvedBuildParams {
   projectPath: string;
@@ -47,9 +47,9 @@ export function resolveBuildParams(args: BuildParamArgs): ResolvedBuildParams {
     (v): v is string => Boolean(v)
   );
   if (missing.length > 0) {
-    throw new AndroidBuildMcpError(
+    throw new TestOrbitFrameworkError(
       'INVALID_CONFIG',
-      `Missing ${missing.join(', ')}. Pass it explicitly, set sessionDefaults in .androidmcp-framework/config.yaml, or call session_set_defaults first.`
+      `Missing ${missing.join(', ')}. Pass it explicitly, set sessionDefaults in .testorbit/config.yaml, or call session_set_defaults first.`
     );
   }
   return {

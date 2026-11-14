@@ -12,7 +12,7 @@ export const workflow = 'testing-intelligence';
 export function register(server: McpServer) {
   return server.registerTool(toolName, {
     title: 'Write Test Report',
-    description: 'Write a Markdown report and machine-readable JSON results under .androidmcp-framework/test-reports/YYYY-MM-DD/<time>-<run-id>. Redacts common secret fields and token values; never infers test success.',
+    description: 'Write a Markdown report and machine-readable JSON results under .testorbit/test-reports/YYYY-MM-DD/<time>-<run-id>. Redacts common secret fields and token values; never infers test success.',
     inputSchema: {
       projectPath: z.string().optional(),
       title: z.string().min(1).max(200),

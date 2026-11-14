@@ -3,7 +3,7 @@ import { toApprovedTestCase, validateCandidateForApproval } from '../review_test
 
 const validCandidate = {
   schemaVersion: 1,
-  format: 'androidmcp-test-candidate',
+  format: 'testorbit-test-candidate',
   id: 'candidate-login',
   title: 'Verify login',
   platform: 'android',
