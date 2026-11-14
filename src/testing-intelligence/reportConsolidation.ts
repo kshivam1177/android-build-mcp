@@ -116,7 +116,7 @@ export function escapeXml(value: string): string {
 }
 export function buildJUnitXml(summary: ConsolidatedSummary): string {
   const cases = summary.tests.map(test => {
-    const attributes = `name="${escapeXml(test.name)}" classname="androidmcp" time="${((test.durationMs ?? 0) / 1000).toFixed(3)}"`;
+    const attributes = `name="${escapeXml(test.name)}" classname="testorbit" time="${((test.durationMs ?? 0) / 1000).toFixed(3)}"`;
     const evidence = [`source report: ${test.sourceReport}`, ...test.evidence].join('\n');
     if (test.status === 'failed') return `  <testcase ${attributes}><failure type="TestFailure" message="${escapeXml(test.message ?? 'Test failed')}">${escapeXml(test.message ?? 'Test failed')}</failure><system-out>${escapeXml(evidence)}</system-out></testcase>`;
     if (test.status === 'skipped') return `  <testcase ${attributes}><skipped message="${escapeXml(test.message ?? 'No explicit passing outcome was recorded.')}" /><system-out>${escapeXml(evidence)}</system-out></testcase>`;
@@ -124,7 +124,7 @@ export function buildJUnitXml(summary: ConsolidatedSummary): string {
   }).join('\n');
   return [
     '<?xml version="1.0" encoding="UTF-8"?>',
-    `<testsuite name="AndroidMCP consolidated tests" tests="${summary.testCount}" failures="${summary.failed}" skipped="${summary.skipped}" errors="0" timestamp="${escapeXml(summary.generatedAt)}">`,
+    `<testsuite name="TestOrbit consolidated tests" tests="${summary.testCount}" failures="${summary.failed}" skipped="${summary.skipped}" errors="0" timestamp="${escapeXml(summary.generatedAt)}">`,
     cases,
     '</testsuite>',
     '',
@@ -132,7 +132,7 @@ export function buildJUnitXml(summary: ConsolidatedSummary): string {
 }
 export function buildSummaryMarkdown(summary: ConsolidatedSummary): string {
   const lines = [
-    '# AndroidMCP Test Summary',
+    '# TestOrbit Test Summary',
     '',
     `- **Status:** ${summary.status.toUpperCase()}`,
     `- **Source reports:** ${summary.sourceReportCount}`,

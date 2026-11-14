@@ -31,7 +31,7 @@ function readPackageVersion(): string {
  */
 export function createServer(): McpServer {
   const config = loadConfig();
-  const server = new McpServer({ name: 'androidmcp-framework', version: readPackageVersion() });
+  const server = new McpServer({ name: 'testorbit', version: readPackageVersion() });
 
   // An existing config file is authoritative even when enabledWorkflows: [] is intentional.
   const hasExplicitConfig = Boolean(findProjectConfigPath(process.cwd()));

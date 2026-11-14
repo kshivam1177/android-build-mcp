@@ -5,7 +5,7 @@ The UI automation workflow runner uses Node.js built-in modules for filesystem a
 ## Project files
 
 ```text
-.androidmcp-framework/
+.testorbit/
   screens/
     login.json
     home.json
@@ -60,6 +60,6 @@ A workflow references screens by key and executes a bounded, ordered action list
 - `wait_for_screen`, `assert_screen`: poll required screen elements using `android layout`.
 - `back`, `key`: send a navigation key or supported Android CLI key.
 
-Run the `run_ui_workflow` MCP tool with a JSON path relative to `.androidmcp-framework/workflows/`. Absolute paths and traversal outside the managed directory are rejected. Workflow and screen JSON files are size-limited; action count and action types are validated before execution. The runner never evaluates workflow text as JavaScript or invokes a shell.
+Run the `run_ui_workflow` MCP tool with a JSON path relative to `.testorbit/workflows/`. Absolute paths and traversal outside the managed directory are rejected. Workflow and screen JSON files are size-limited; action count and action types are validated before execution. The runner never evaluates workflow text as JavaScript or invokes a shell.
 
 Install Google Android CLI and ensure `android` is on `PATH`; override the executable with `ANDROID_CLI_PATH` if needed. Install ADB for coordinate fallback. This is an execution engine, not a natural-language agent: use a coding agent to draft screen/workflow JSON, then validate and run it with the MCP tool.

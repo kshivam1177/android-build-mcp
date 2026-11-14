@@ -44,8 +44,8 @@ Example:
 {
   "projectPath": ".",
   "reportPaths": [
-    ".androidmcp-framework/test-reports/2026-10-28/030000-native/summary.json",
-    ".androidmcp-framework/test-reports/2026-10-28/030500-ui/summary.json"
+    ".testorbit/test-reports/2026-10-28/030000-native/summary.json",
+    ".testorbit/test-reports/2026-10-28/030500-ui/summary.json"
   ],
   "requiredSuites": ["unit", "integration", "ui-login"],
   "maxAgeMinutes": 1440,

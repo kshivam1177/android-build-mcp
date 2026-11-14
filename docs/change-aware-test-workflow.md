@@ -29,8 +29,8 @@ The response includes selected saved test cases, explicit coverage gaps, and a p
 }
 ```
 
-Execution requires saved test cases under `.androidmcp-framework/testcases/` and a ready ADB target. Supported saved actions are `tap`, `type_text`, `key_press`, `button`, and `wait_for_ui`. Tap/type targets must resolve uniquely when semantic labels are used; ambiguous matches fail rather than selecting an arbitrary element. Assertions and unsupported actions are not fabricated or silently treated as verified.
+Execution requires saved test cases under `.testorbit/testcases/` and a ready ADB target. Supported saved actions are `tap`, `type_text`, `key_press`, `button`, and `wait_for_ui`. Tap/type targets must resolve uniquely when semantic labels are used; ambiguous matches fail rather than selecting an arbitrary element. Assertions and unsupported actions are not fabricated or silently treated as verified.
 
-Each run writes case JSON reports and aggregate `summary.json` / `summary.md` under `.androidmcp-framework/test-reports/YYYY-MM-DD/`. Failed steps attempt to save a screenshot under the same run's `evidence/` directory. A run is not marked passed if any case is failed or incomplete.
+Each run writes case JSON reports and aggregate `summary.json` / `summary.md` under `.testorbit/test-reports/YYYY-MM-DD/`. Failed steps attempt to save a screenshot under the same run's `evidence/` directory. A run is not marked passed if any case is failed or incomplete.
 
 The tool uses the existing natural-language planner and saved case mappings. It does not guarantee full coverage: read the returned `coverageGaps` and warnings before using the result as a release gate.

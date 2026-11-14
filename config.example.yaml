@@ -1,5 +1,5 @@
-# AndroidMCP Framework project config.
-# Created at .androidmcp-framework/config.yaml by `androidmcp-framework setup`.
+# TestOrbit project config.
+# Created at .testorbit/config.yaml by `testorbit setup`.
 # Every field is optional; the whole file is optional.
 
 schemaVersion: 1

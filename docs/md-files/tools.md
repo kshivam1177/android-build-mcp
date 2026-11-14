@@ -162,7 +162,7 @@ Start or stop an on-device screen recording (adb shell screenrecord) and pull th
 Semantic UI snapshots, screenshot OCR coordinates, selector-based form filling, declarative JSON workflows using Google's Android CLI, and tap/swipe/drag/type/key/gesture/wait/batch.
 
 ### `snapshot_ui`
-Capture the semantic UI hierarchy and cache short-lived elementRefs. By default, saves the raw hierarchy XML and full parsed tree under `.androidmcp-framework/artifacts/snapshots/` and returns a compact summary; set `includeElements=true` to include elements inline. Refresh after navigation, scrolling, or any layout change.
+Capture the semantic UI hierarchy and cache short-lived elementRefs. By default, saves the raw hierarchy XML and full parsed tree under `.testorbit/artifacts/snapshots/` and returns a compact summary; set `includeElements=true` to include elements inline. Refresh after navigation, scrolling, or any layout change.
 
 - **Title:** Snapshot UI
 - **Parameters:** `targetId`, `projectPath`, `interactiveOnly`, `persist`, `includeElements`
@@ -232,7 +232,7 @@ Named system gesture presets: expand_notifications, expand_quick_settings, colla
 - **Annotations:** mutating
 
 ### `screenshot`
-Capture a screenshot, always save it under `.androidmcp-framework/artifacts/screenshots/<targetId>-<timestamp>.png`, and return the image with the absolute saved path in the text response.
+Capture a screenshot, always save it under `.testorbit/artifacts/screenshots/<targetId>-<timestamp>.png`, and return the image with the absolute saved path in the text response.
 
 - **Title:** Screenshot
 - **Parameters:** `targetId`, `projectPath`, `outputPath`
@@ -253,7 +253,7 @@ Fill visible form fields by unique semantic selectors, refresh the hierarchy bet
 - **Annotations:** mutating
 
 ### `run_ui_workflow`
-Execute a JSON-defined sequence from `.androidmcp-framework/workflows/`, using screen definitions under `.androidmcp-framework/screens/`. Supports taps, text input, waits, screen assertions, back/key actions, and writes a per-run report. Prefers the official Android CLI for semantic interaction; ADB is used for explicit coordinate-tap fallback.
+Execute a JSON-defined sequence from `.testorbit/workflows/`, using screen definitions under `.testorbit/screens/`. Supports taps, text input, waits, screen assertions, back/key actions, and writes a per-run report. Prefers the official Android CLI for semantic interaction; ADB is used for explicit coordinate-tap fallback.
 
 - **Title:** Run UI Workflow
 - **Parameters:** `workflowFile`, `projectPath`, `deviceId`
@@ -382,7 +382,7 @@ Report a module's build configuration. If `variant` is given and already built, 
 
 - `analyze_test_project` — inspect Native Android/Flutter project markers and available test files.
 - `save_test_instructions` — persist user-authored Markdown instructions without overwriting existing files unless explicitly authorized.
-- `write_test_report` — write redacted Markdown/JSON reports to `.androidmcp-framework/test-reports/YYYY-MM-DD/<time>-<run-id>/`.
+- `write_test_report` — write redacted Markdown/JSON reports to `.testorbit/test-reports/YYYY-MM-DD/<time>-<run-id>/`.
 - `save_test_case` — persist a structured reusable test case.
 - `list_test_cases` — list saved test cases.
 - `audit_screen` — inspect the active screen for UI issues and relevant log errors.

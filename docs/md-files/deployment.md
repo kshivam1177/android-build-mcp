@@ -1,6 +1,6 @@
 # Deployment and release setup
 
-AndroidMCP Framework is a local developer tool that runs as a child process of an MCP client. It does not need a public server or hosted endpoint for stdio usage.
+TestOrbit is a local developer tool that runs as a child process of an MCP client. It does not need a public server or hosted endpoint for stdio usage.
 
 ## Local development
 
@@ -19,9 +19,9 @@ Connect a client to the built entry point:
 ```json
 {
   "mcpServers": {
-    "androidmcp-framework": {
+    "testorbit": {
       "command": "node",
-      "args": ["/absolute/path/to/AndroidMCP Framework/build/cli/index.js", "mcp"]
+      "args": ["/absolute/path/to/TestOrbit/build/cli/index.js", "mcp"]
     }
   }
 }
@@ -35,7 +35,7 @@ Use an absolute path in client configuration. Configure `ANDROID_HOME` or `ANDRO
 2. Run `npm ci`, `npm run typecheck`, `npm test`, and `npm run build` in CI.
 3. Run `npm pack --dry-run` and confirm `build/`, `templates/`, examples/, README, and license are included as intended. The Python UI-automation bridge has been removed and is not part of the published package.
 4. Publish using the project's release credentials and normal npm provenance/release policy.
-5. Smoke-test the published package in a clean environment with `npx -y androidmcp-framework@<version> doctor` and a real MCP client.
+5. Smoke-test the published package in a clean environment with `npx -y testorbit@<version> doctor` and a real MCP client.
 
 ## CI considerations
 

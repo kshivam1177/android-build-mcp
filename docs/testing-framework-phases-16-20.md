@@ -27,7 +27,7 @@ Use `run_autonomous_test_cycle` with a natural-language request and project root
 3. Preview the exact supported command by default.
 4. When the caller explicitly sets `execute=true`, run only the selected project-native test command with a bounded timeout.
 5. Classify failure output and retry only when the failure appears transient, safe-to-repeat was declared by the orchestrator, and the configured retry budget remains.
-6. Save immutable attempt logs and a Markdown/JSON summary under `.androidmcp-framework/test-reports/YYYY-MM-DD/HHmmss-autonomous-<id>/`.
+6. Save immutable attempt logs and a Markdown/JSON summary under `.testorbit/test-reports/YYYY-MM-DD/HHmmss-autonomous-<id>/`.
 7. Apply the strict test gate: only an explicit successful runner exit passes; blocked or failed runs do not.
 
 Example MCP input:

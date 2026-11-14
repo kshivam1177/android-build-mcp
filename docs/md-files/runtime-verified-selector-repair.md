@@ -8,7 +8,7 @@ Selector repair is a controlled maintenance operation, not an automatic retry. T
 2. Supply the saved test case ID, 1-based step number, exact current `originalTarget`, proposed target, and hierarchy capture timestamp.
 3. Call without `approve=true` first. The tool checks that the evidence timestamp is valid and at most five minutes old, that the proposed target resolves uniquely, that the node is explicitly enabled, and—when the action is `tap`—that the node is clickable.
 4. Review the result and selector in the context of the app's expected behavior. Only then call with `approve=true`.
-5. The tool re-reads the test case and refuses a stale proposal if the saved target no longer equals `originalTarget`. It backs up the full case, changes only the selected step's `target`, and appends an audit record under `.androidmcp-framework/selector-repairs/audit.jsonl`.
+5. The tool re-reads the test case and refuses a stale proposal if the saved target no longer equals `originalTarget`. It backs up the full case, changes only the selected step's `target`, and appends an audit record under `.testorbit/selector-repairs/audit.jsonl`.
 6. Rerun the test and inspect its report. A repair is not a test pass and does not count as coverage until the updated case has actually executed with valid evidence.
 
 ## Safety boundaries

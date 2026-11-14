@@ -13,7 +13,7 @@ type WorkflowDefinition = { schemaVersion?: string; id: string; name?: string; f
 export type StepResult = { id: string; type: string; status: 'passed'|'failed'; durationMs: number; message?: string };
 export type WorkflowResult = { workflowId: string; success: boolean; startedAt: string; durationMs: number; steps: StepResult[]; reportPath: string; sequenceCachePath?: string };
 
-const ROOT = '.androidmcp-framework';
+const ROOT = '.testorbit';
 const MAX_JSON_BYTES = 1024 * 1024;
 const ACTION_TYPES = new Set(['tap','type','wait','wait_for_screen','assert_screen','back','key']);
 

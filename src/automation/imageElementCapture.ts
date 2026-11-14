@@ -136,7 +136,7 @@ export async function captureImageElements(options: {
   if (!ocrWidth) ocrWidth = imageWidth;
   if (!ocrHeight) ocrHeight = imageHeight;
 
-  const tempDir = await mkdtemp(path.join(os.tmpdir(), 'androidmcp-image-capture-'));
+  const tempDir = await mkdtemp(path.join(os.tmpdir(), 'testorbit-image-capture-'));
   let words: OcrWord[] = [];
   let ocrAvailable = false;
   try {
