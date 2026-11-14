@@ -22,7 +22,7 @@ export async function findExpiredReports(reportsRoot: string, retentionDays: num
     throw error;
   }
   const projectRoot = await fs.realpath(path.resolve(reportsRoot, '..', '..'));
-  if (await fs.realpath(reportsRoot) !== path.join(projectRoot, '.androidmcp-framework', 'test-reports')) throw new Error('Refusing to inspect reports through a symlinked or external reports directory.');
+  if (await fs.realpath(reportsRoot) !== path.join(projectRoot, '.testorbit', 'test-reports')) throw new Error('Refusing to inspect reports through a symlinked or external reports directory.');
   for (const dateName of dates) {
     if (!datePattern.test(dateName)) continue;
     const date = new Date(dateName + 'T00:00:00.000Z');
@@ -63,7 +63,7 @@ export function register(server: McpServer) {
     annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: false, openWorldHint: false }
   }, withErrorHandling(async (args: { action: 'inspect' | 'prune'; projectPath?: string; retentionDays?: number; dryRun?: boolean; confirm?: boolean }) => {
     const root = resolveProjectRoot(path.resolve(args.projectPath ?? process.cwd()));
-    const reportsRoot = path.resolve(root, '.androidmcp-framework', 'test-reports');
+    const reportsRoot = path.resolve(root, '.testorbit', 'test-reports');
     const retentionDays = args.retentionDays ?? 30;
     const candidates = await findExpiredReports(reportsRoot, retentionDays);
     if (args.action === 'inspect' || args.dryRun !== false) {

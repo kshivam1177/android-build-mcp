@@ -83,7 +83,7 @@ export function register(server: McpServer) {
     const configExists = await exists(path.join(configDir, 'config.yaml'));
     add(configExists
       ? { name: 'framework-config', status: 'pass', detail: 'Framework project config exists.' }
-      : { name: 'framework-config', status: 'warning', detail: 'No .androidmcp-framework/config.yaml found; run androidmcp-framework setup to initialize project-local configuration.' });
+      : { name: 'framework-config', status: 'warning', detail: 'No .testorbit/config.yaml found; run testorbit setup to initialize project-local configuration.' });
 
     const testCaseDir = path.join(configDir, 'testcases');
     let files: string[] = [];
@@ -104,7 +104,7 @@ export function register(server: McpServer) {
     }
     const validCases = caseDetails.filter(item => item.valid);
     if (validCases.length) add({ name: 'saved-test-cases', status: 'pass', detail: validCases.length + ' executable saved case(s) found (' + caseDetails.length + ' JSON file(s) scanned).' });
-    else add({ name: 'saved-test-cases', status: 'blocker', detail: 'No valid executable saved test cases found under .androidmcp-framework/testcases/.' });
+    else add({ name: 'saved-test-cases', status: 'blocker', detail: 'No valid executable saved test cases found under .testorbit/testcases/.' });
     for (const invalid of caseDetails.filter(item => !item.valid)) {
       add({ name: 'test-case:' + invalid.file, status: 'warning', detail: [...invalid.issues, ...invalid.unsupportedActions.map(action => 'Unsupported action ' + action)].join(' ') || 'Case is not executable.' });
     }
@@ -119,7 +119,7 @@ export function register(server: McpServer) {
     }
     if (adbAvailable) add({ name: 'adb', status: 'pass', detail: 'ADB is available; ' + targets.length + ' target(s) detected.' });
     const ready = targets.filter(target => target.state === 'device');
-    let selectedTarget = requestedTarget ? targets.find(target => target.id === requestedTarget && target.state === 'device') : ready.length === 1 ? ready[0] : undefined;
+    const selectedTarget = requestedTarget ? targets.find(target => target.id === requestedTarget && target.state === 'device') : ready.length === 1 ? ready[0] : undefined;
     if (requestedTarget && !selectedTarget) {
       add({ name: 'target', status: args.requireDevice === false ? 'warning' : 'blocker', detail: 'Requested/session target "' + requestedTarget + '" is not connected and ready. Detected: ' + (targets.map(target => target.id + '(' + target.state + ')').join(', ') || 'none') + '.' });
     } else if (!requestedTarget && ready.length === 1 && selectedTarget) {

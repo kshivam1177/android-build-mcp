@@ -41,7 +41,7 @@ describe('snapshot_ui persistence', () => {
       elements: Array<{ text?: string }>;
     };
 
-    expect(artifactPath).toContain(path.join('.androidmcp-framework', 'artifacts', 'snapshots'));
+    expect(artifactPath).toContain(path.join('.testorbit', 'artifacts', 'snapshots'));
     expect(artifact.rawHierarchyXml).toBe(XML);
     expect(artifact.totalElementCount).toBe(1);
     expect(artifact.elements[0]?.text).toBe('Login');

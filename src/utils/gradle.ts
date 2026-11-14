@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { execCommand } from './exec.js';
 import { loadConfig } from '../config/loader.js';
-import { AndroidBuildMcpError } from '../types.js';
+import { TestOrbitFrameworkError } from '../types.js';
 import type { ExecResult } from '../types.js';
 
 /** Prefer the project's own wrapper (pins the exact Gradle version the
@@ -24,13 +24,13 @@ export function resolveGradleCommand(projectPath: string): { command: string; ar
 
 export function assertGradleProject(projectPath: string): void {
   if (!fs.existsSync(projectPath)) {
-    throw new AndroidBuildMcpError('PROJECT_NOT_FOUND', `No such project path: ${projectPath}`, { projectPath });
+    throw new TestOrbitFrameworkError('PROJECT_NOT_FOUND', `No such project path: ${projectPath}`, { projectPath });
   }
   const hasSettings =
     fs.existsSync(path.join(projectPath, 'settings.gradle')) ||
     fs.existsSync(path.join(projectPath, 'settings.gradle.kts'));
   if (!hasSettings) {
-    throw new AndroidBuildMcpError(
+    throw new TestOrbitFrameworkError(
       'PROJECT_NOT_FOUND',
       `${projectPath} doesn't look like a Gradle project root (no settings.gradle or settings.gradle.kts).`,
       { projectPath }
@@ -55,7 +55,7 @@ export async function runGradle(projectPath: string, tasks: string[], options: R
   });
 
   if (result.exitCode !== 0) {
-    throw new AndroidBuildMcpError(
+    throw new TestOrbitFrameworkError(
       'GRADLE_BUILD_FAILED',
       `Gradle task(s) "${tasks.join(' ')}" failed with exit code ${result.exitCode}.`,
       { command: result.command, exitCode: result.exitCode, stdout: result.stdout.slice(-4000), stderr: result.stderr.slice(-4000) }

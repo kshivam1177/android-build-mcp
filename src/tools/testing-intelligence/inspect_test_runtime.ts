@@ -25,7 +25,7 @@ async function listJsonFiles(directory: string): Promise<string[]> {
 
 export function register(server: McpServer) {
   return server.registerTool(toolName, {
-    title: 'Inspect AndroidMCP Test Runtime',
+    title: 'Inspect TestOrbit Test Runtime',
     description: 'Read-only overview of the current project config, active-run lock, resumable run manifests, and latest test report. Returns metadata and gate summaries only; it does not execute commands or expose raw logs.',
     inputSchema: {
       projectPath: z.string().optional(),

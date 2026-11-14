@@ -3,8 +3,9 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { withErrorHandling, textResult } from '../../utils/response.js';
 import { resolveElementRef } from '../../automation/uiHierarchy.js';
 import { resolveTargetAndBackend, getScreenSize } from './_shared.js';
-import { isRecording, recordAction, type RecordedSelector } from '../../automation/recorder.js';
-import { AndroidBuildMcpError } from '../../types.js';
+import { isRecording, type RecordedSelector } from '../../automation/recorder.js';
+import { finishRecordingProbe, startRecordingProbe } from './recording-probe.js';
+import { TestOrbitFrameworkError } from '../../types.js';
 import type { ToolModule } from '../types.js';
 
 export const toolName = 'tap';
@@ -42,19 +43,20 @@ export function register(server: McpServer) {
         };
       }
       if (x === undefined || y === undefined) {
-        throw new AndroidBuildMcpError('INVALID_CONFIG', 'Provide either elementRef, or both x and y.');
+        throw new TestOrbitFrameworkError('INVALID_CONFIG', 'Provide either elementRef, or both x and y.');
       }
+      const probe = await startRecordingProbe(backend, target.id);
       await backend.tap(target.id, x, y);
       if (isRecording(target.id)) {
         const screenSize = await getScreenSize(target.id);
-        recordAction({
+        await finishRecordingProbe(probe, target.id, {
           type: 'tap',
           durationMs: Date.now() - stepStart,
           selector,
           coordinates: { x, y },
           normalizedCoordinates: { x: x / screenSize.width, y: y / screenSize.height },
           screenSize,
-        });
+        }, selector);
       }
       return textResult(`Tapped (${x}, ${y}) on ${target.id}.`, { target, x, y, backend: backend.name });
     })

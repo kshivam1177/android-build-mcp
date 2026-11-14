@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { resolveAndroidHome } from '../../utils/apk.js';
 import { listTargets } from '../../utils/adb.js';
-import { AndroidBuildMcpError } from '../../types.js';
+import { TestOrbitFrameworkError } from '../../types.js';
 import type { TargetInfo } from '../../types.js';
 
 function binName(base: string): string {
@@ -31,7 +31,7 @@ export function findAvdmanager(): string {
   const legacy = path.join(home, 'tools', 'bin', binName('avdmanager'));
   if (fs.existsSync(legacy)) return legacy;
 
-  throw new AndroidBuildMcpError(
+  throw new TestOrbitFrameworkError(
     'FILE_NOT_FOUND',
     `avdmanager not found under ${home}/cmdline-tools or ${home}/tools/bin. Install "cmdline-tools;latest" via sdkmanager.`
   );
@@ -41,7 +41,7 @@ export function findEmulatorBinary(): string {
   const home = resolveAndroidHome();
   const bin = path.join(home, 'emulator', process.platform === 'win32' ? 'emulator.exe' : 'emulator');
   if (!fs.existsSync(bin)) {
-    throw new AndroidBuildMcpError(
+    throw new TestOrbitFrameworkError(
       'FILE_NOT_FOUND',
       `emulator binary not found at ${bin}. Install the "emulator" package via sdkmanager.`
     );
@@ -84,7 +84,7 @@ export async function waitForNewEmulator(before: TargetInfo[], timeoutMs = 120_0
     const match = current.find((t) => t.type === 'emulator' && t.state === 'device' && !beforeIds.has(t.id));
     if (match) return match;
     if (Date.now() - start > timeoutMs) {
-      throw new AndroidBuildMcpError('TIMEOUT', `No new emulator reached "device" state within ${timeoutMs}ms.`);
+      throw new TestOrbitFrameworkError('TIMEOUT', `No new emulator reached "device" state within ${timeoutMs}ms.`);
     }
     await new Promise((resolve) => setTimeout(resolve, 2_000));
   }

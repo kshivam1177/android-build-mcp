@@ -1,5 +1,6 @@
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
-import { AndroidBuildMcpError } from '../types.js';
+import { TestOrbitFrameworkError } from '../types.js';
+import { TestOrbitError } from '../testorbit/domain/errors.js';
 
 export function textResult(text: string, structuredContent?: Record<string, unknown>): CallToolResult {
   return structuredContent !== undefined
@@ -10,11 +11,28 @@ export function textResult(text: string, structuredContent?: Record<string, unkn
 /**
  * Every tool's catch block should funnel through this. Fails loudly with a
  * structured [CODE] prefix instead of silently swallowing or returning an
- * empty/ambiguous success - matches AndroidBuildMcpError's `code` so an agent
+ * empty/ambiguous success - matches TestOrbitFrameworkError's `code` so an agent
  * can branch on failure type without string-matching prose.
+ *
+ * TestOrbit typed errors (Phase 2) are mapped the same way: the stable code,
+ * the message, the remediation telling the caller what to do next, and the
+ * named context values — never a bare [UNEXPECTED_ERROR].
  */
 export function errorResult(error: unknown): CallToolResult {
-  if (error instanceof AndroidBuildMcpError) {
+  if (error instanceof TestOrbitError) {
+    const contextText =
+      Object.keys(error.context).length > 0 ? `\n\nContext: ${JSON.stringify(error.context, null, 2)}` : '';
+    return {
+      isError: true,
+      content: [
+        {
+          type: 'text',
+          text: `[${error.code}] ${error.message}\n\nRemediation: ${error.remediation}${contextText}`,
+        },
+      ],
+    };
+  }
+  if (error instanceof TestOrbitFrameworkError) {
     const detailsText = error.details ? `\n\nDetails: ${JSON.stringify(error.details, null, 2)}` : '';
     return {
       isError: true,

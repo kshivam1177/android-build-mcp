@@ -4,7 +4,7 @@ import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { withErrorHandling, textResult } from '../../utils/response.js';
 import { moduleDirFromPath, findBuiltApk, inspectApk } from '../../utils/apk.js';
-import { AndroidBuildMcpError } from '../../types.js';
+import { TestOrbitFrameworkError } from '../../types.js';
 import type { ToolModule } from '../types.js';
 
 export const toolName = 'show_build_config';
@@ -38,7 +38,7 @@ export function register(server: McpServer) {
           return textResult(JSON.stringify({ source: 'apk', apkPath, ...info }, null, 2));
         } catch (err) {
           // Fall through to best-effort source parsing if nothing's built yet.
-          if (!(err instanceof AndroidBuildMcpError && err.code === 'FILE_NOT_FOUND')) throw err;
+          if (!(err instanceof TestOrbitFrameworkError && err.code === 'FILE_NOT_FOUND')) throw err;
         }
       }
 
@@ -46,7 +46,7 @@ export function register(server: McpServer) {
       const groovy = path.join(moduleDir, 'build.gradle');
       const buildFile = fs.existsSync(kts) ? kts : fs.existsSync(groovy) ? groovy : null;
       if (!buildFile) {
-        throw new AndroidBuildMcpError('MODULE_NOT_FOUND', `No build.gradle[.kts] under ${moduleDir}.`);
+        throw new TestOrbitFrameworkError('MODULE_NOT_FOUND', `No build.gradle[.kts] under ${moduleDir}.`);
       }
       const text = fs.readFileSync(buildFile, 'utf8');
       const config = {

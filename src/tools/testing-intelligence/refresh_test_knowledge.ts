@@ -15,7 +15,7 @@ export const workflow = 'testing-intelligence';
 export function register(server: McpServer) {
   return server.registerTool(toolName, {
     title: 'Refresh Persistent Test Knowledge',
-    description: 'Index saved test cases, instructions, learned screens, recordings, workflows, and reports into .androidmcp-framework/test-knowledge.json. Tracks asset changes since the previous refresh, highlights test cases whose explicit source mappings intersect Git changes, and summarizes known failures without copying failure messages or secrets. Does not execute tests.',
+    description: 'Index saved test cases, instructions, learned screens, recordings, workflows, and reports into .testorbit/test-knowledge.json. Tracks asset changes since the previous refresh, highlights test cases whose explicit source mappings intersect Git changes, and summarizes known failures without copying failure messages or secrets. Does not execute tests.',
     inputSchema: {
       projectPath: z.string().optional(),
       base: z.string().optional().describe('Git base ref for source-change analysis; defaults to HEAD~1.'),

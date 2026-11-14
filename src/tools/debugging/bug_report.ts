@@ -15,7 +15,7 @@ export function register(server: McpServer) {
     {
       title: 'Bug Report',
       description:
-        'Generate a full adb bugreport (system state, logs, dumpsys output for every service) and save it under .androidmcp-framework/artifacts/bugreports/ by default. This is comprehensive but slow - budget 1-3 minutes.',
+        'Generate a full adb bugreport (system state, logs, dumpsys output for every service) and save it under .testorbit/artifacts/bugreports/ by default. This is comprehensive but slow - budget 1-3 minutes.',
       inputSchema: {
         targetId: z.string().optional(),
         projectPath: z.string().optional().describe('Project root for the bug report; defaults to the current working directory.'),

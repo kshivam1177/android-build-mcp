@@ -3,7 +3,7 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { withErrorHandling, textResult } from '../../utils/response.js';
 import { resolveElementRef } from '../../automation/uiHierarchy.js';
 import { resolveTargetAndBackend } from './_shared.js';
-import { AndroidBuildMcpError } from '../../types.js';
+import { TestOrbitFrameworkError } from '../../types.js';
 import type { ToolModule } from '../types.js';
 
 export const toolName = 'drag';
@@ -55,7 +55,7 @@ export function register(server: McpServer) {
           endY = node.centerY;
         }
         if (startX === undefined || startY === undefined || endX === undefined || endY === undefined) {
-          throw new AndroidBuildMcpError('INVALID_CONFIG', 'Provide start/end as elementRefs or as raw x/y pairs.');
+          throw new TestOrbitFrameworkError('INVALID_CONFIG', 'Provide start/end as elementRefs or as raw x/y pairs.');
         }
         await backend.drag(target.id, startX, startY, endX, endY, args.durationMs);
         return textResult(`Dragged (${startX},${startY}) -> (${endX},${endY}) on ${target.id}.`, { target });

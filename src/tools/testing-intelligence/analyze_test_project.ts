@@ -11,7 +11,7 @@ import type { ToolModule } from '../types.js';
 
 export const toolName = 'analyze_test_project';
 export const workflow = 'testing-intelligence';
-const SKIP = new Set(['.git', '.gradle', '.dart_tool', '.idea', '.androidmcp-framework', '.android-build-mcp', '.androidbuildmcp', 'node_modules', 'build', 'Pods', '.symlinks']);
+const SKIP = new Set(['.git', '.gradle', '.dart_tool', '.idea', '.testorbit', '.android-build-mcp', '.androidbuildmcp', 'node_modules', 'build', 'Pods', '.symlinks']);
 const MARKERS = new Set(['pubspec.yaml', 'pubspec.lock', 'settings.gradle', 'settings.gradle.kts', 'build.gradle', 'build.gradle.kts', 'gradlew', 'gradlew.bat', 'AndroidManifest.xml', 'package.json', 'analysis_options.yaml']);
 function walk(root: string, rel = '', depth = 0, out: string[] = []): string[] {
   if (depth > 7 || out.length > 12000) return out;

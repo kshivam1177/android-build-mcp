@@ -189,7 +189,7 @@ export function register(server: McpServer) {
     await fs.writeFile(path.join(reportDir, 'summary.json'), JSON.stringify(summary, null, 2) + '\n', { encoding: 'utf8', flag: 'wx' });
     await fs.writeFile(path.join(reportDir, 'report.json'), JSON.stringify(summary, null, 2) + '\n', { encoding: 'utf8', flag: 'wx' });
     await fs.writeFile(path.join(reportDir, 'summary.md'), [
-      '# AndroidMCP Test Suite Matrix', '',
+      '# TestOrbit Test Suite Matrix', '',
       '- **Status:** ' + counts.status.toUpperCase(),
       '- **Platform:** ' + platform,
       '- **Git HEAD:** ' + (gitHeadSha ?? 'UNAVAILABLE'),

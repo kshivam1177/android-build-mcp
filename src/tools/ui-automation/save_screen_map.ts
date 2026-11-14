@@ -34,7 +34,7 @@ export function register(server: McpServer) {
       const nodes = parseUiHierarchy(hierarchy);
       cacheSnapshot({ targetId: target.id, capturedAt: new Date().toISOString(), backend: backend.name, nodes });
       const projectRoot = path.resolve(args.projectPath ?? process.cwd());
-      const mapDir = path.join(projectRoot, '.androidmcp-framework', 'screen-maps');
+      const mapDir = path.join(projectRoot, '.testorbit', 'screen-maps');
       const imageDir = path.join(mapDir, 'images');
       fs.mkdirSync(imageDir, { recursive: true });
       const imageExtension = screenshot.mimeType === 'image/jpeg' ? 'jpg' : 'png';
@@ -63,7 +63,7 @@ export function register(server: McpServer) {
         elementCount: screenMap.elements.length,
         screenshotPath: path.relative(projectRoot, screenshotPath),
         screenMapPath: path.relative(projectRoot, mapPath),
-        note: 'Screen maps contain device-specific coordinates. Prefer selectors and validate the fingerprint before coordinate fallback.',
+        note: 'Screen maps contain device-specific coordinates. Prefer stable selectors; the fingerprint is a version stamp only, never a run-time check, and there is no coordinate fallback.',
       };
       return textResult(JSON.stringify(result, null, 2), result);
     })
